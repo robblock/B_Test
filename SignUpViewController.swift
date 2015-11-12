@@ -51,7 +51,9 @@ class SignUpViewController : PFSignUpViewController {
         super.viewDidAppear(animated)
         
         let signUpViewController = SignUpViewController()
+        
         signUpView?.delegate = self
+        
         signUpViewController.fields = PFSignUpFields(rawValue: PFSignUpFields.UsernameAndPassword.rawValue | PFSignUpFields.Email.rawValue | PFSignUpFields.SignUpButton.rawValue)
     }
     

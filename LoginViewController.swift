@@ -19,15 +19,21 @@ class LoginViewController : PFLogInViewController {
         super.viewDidLoad()
         
         //Set the background image
+        let blurEffect = UIBlurEffect(style: UIBlurEffectStyle.Dark)
+        let blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.frame = view.bounds
+        
         backgroundImage = UIImageView(image: UIImage(named: "welcome_bg"))
         backgroundImage.contentMode = UIViewContentMode.ScaleAspectFill
+        backgroundImage.addSubview(blurEffectView)
         self.logInView?.insertSubview(backgroundImage, atIndex: 0)
+        
         
         //Remove the Parse Logo
         let logo = UILabel()
         logo.text = "ORDR"
         logo.textColor = UIColor.whiteColor()
-        logo.font = UIFont(name: "Pacifico", size: 70)
+        logo.font = UIFont(name: "Pacifico.ttf", size: 70)
         logo.shadowColor = UIColor.lightGrayColor()
         logo.shadowOffset = CGSizeMake(2, 2)
         logInView?.logo = logo
@@ -40,9 +46,9 @@ class LoginViewController : PFLogInViewController {
         logInView?.logInButton?.backgroundColor = UIColor(red: 52/255, green: 191/255, blue: 73/255, alpha: 1)
         
         //Make the buttons classier
-//        customizeButton(logInView!.facebookButton!)
-//        customizeButton(logInView!.twitterButton!)
-//        customizeButton(logInView!.signUpButton!)
+        customizeButton(logInView!.facebookButton!)
+        customizeButton(logInView!.twitterButton!)
+        customizeButton(logInView!.signUpButton!)
         
         self.signUpController = SignUpViewController()
     }

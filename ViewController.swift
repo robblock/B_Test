@@ -45,7 +45,8 @@ class ViewController: UIViewController, PFLogInViewControllerDelegate, PFSignUpV
             
         } else {
             
-            presentLoggedInAlert()
+            let vc = self.storyboard?.instantiateViewControllerWithIdentifier("Home") as! HomeViewController
+            self.presentViewController(vc, animated: true, completion: nil)
         }
     }
     

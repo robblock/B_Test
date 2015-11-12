@@ -26,12 +26,12 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="565" y="143"/>
+            <point key="canvasLocation" x="561" y="158"/>
         </scene>
-        <!--View Controller-->
+        <!--Home View Controller-->
         <scene sceneID="F0i-Mk-XOY">
             <objects>
-                <viewController id="fe2-gd-KJ7" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="Home" id="fe2-gd-KJ7" customClass="HomeViewController" customModule="beacons_test" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="2Mb-Fd-C13"/>
                         <viewControllerLayoutGuide type="bottom" id="Yq3-QM-4py"/>
@@ -39,8 +39,43 @@
                     <view key="view" contentMode="scaleToFill" id="Odx-fx-N8x">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tabBar contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="USu-Az-CeQ">
+                                <rect key="frame" x="0.0" y="551" width="600" height="49"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <items>
+                                    <tabBarItem systemItem="favorites" id="oGa-TG-VGL"/>
+                                    <tabBarItem systemItem="more" id="hvo-IP-0xp"/>
+                                </items>
+                            </tabBar>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Xwe-BV-LlQ">
+                                <rect key="frame" x="20" y="20" width="46" height="30"/>
+                                <state key="normal" title="Button"/>
+                            </button>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="3Vd-Rq-z0m">
+                                <rect key="frame" x="0.0" y="122" width="600" height="429"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <prototypes>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" restorationIdentifier="Cell" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="Cell" id="t3s-Ld-M0i">
+                                        <rect key="frame" x="0.0" y="28" width="600" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="t3s-Ld-M0i" id="CKI-iY-hvV">
+                                            <rect key="frame" x="0.0" y="0.0" width="600" height="43"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="fe2-gd-KJ7" id="SXf-Ie-gdN"/>
+                                    <outlet property="delegate" destination="fe2-gd-KJ7" id="6yS-YT-FzP"/>
+                                </connections>
+                            </tableView>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
+                    <connections>
+                        <outlet property="tableView" destination="3Vd-Rq-z0m" id="je6-dp-Rve"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ouZ-vn-CGh" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
