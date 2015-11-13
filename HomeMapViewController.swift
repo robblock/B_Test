@@ -11,7 +11,11 @@ import MapKit
 
 class HomeMapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate {
     
-    var locationManager = CLLocationManager()
+    let locationManager = CLLocationManager()
+    let geoCoder = CLGeocoder()
+    var center = CLLocationCoordinate2D()
+    var annotations = [MKPointAnnotation]()
+    
     
     //MARK: - Actions & Outlets
     @IBOutlet weak var mapView: MKMapView!
@@ -19,17 +23,44 @@ class HomeMapViewController: UIViewController, MKMapViewDelegate, CLLocationMana
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        weak var delegate: MKMapViewDelegate?
-        
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
         
-        let geoCoder = CLGeocoder()
     }
+    
 
 
+    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
+        if annotation is MKPointAnnotation {
+            return nil
+        }
+        
+        var view = mapView.dequeueReusableAnnotationViewWithIdentifier("pin") as? MKPinAnnotationView
+        if view == nil {
+            view = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "pin")
+            view?.canShowCallout = true
+        }
+        return view
+    }
+    
+    func mapView(mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        let index = (self.annotations as NSArray).indexOfObject(view.annotation!)
+//        let index >= 0 {
+//            self.showDetailsForResult(self.results[index])
+//        }
+    }
+    
+//    func mapView(mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+//        if self.center == nil {
+//            self.center = mapView.region.center
+//        } else {
+//            let before = CLLocationCoordinate2D(latitude: self.center.latitude, longitude: self.center.longitude)
+//            let nowCenter = mapView.region.center
+//            let now = CLLocation(latitude: nowCenter.latitude, longitude: nowCenter.longitude)
+//        }
+//    }
 
     //MARK: - JSON
     func loadInitialJsonData() {
