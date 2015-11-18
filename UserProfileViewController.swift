@@ -8,19 +8,17 @@
 
 import UIKit
 import Parse
-import Alamofire
-import SwiftyJSON
 
-class UserProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+
+class UserProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDelegate, UITableViewDataSource {
     
     let imagePicker = UIImagePickerController()
     
-    @IBOutlet weak var imageView: UIImageView!
-    @IBOutlet weak var preferedOrderCell: UITableViewCell!
-    @IBOutlet weak var previousOrdersCell: UITableViewCell!
+    var preferedDrink = [String]()
+    var previousDrink = [String]()
     
-    @IBOutlet weak var preferedOrderLabel: UILabel!
-    @IBOutlet weak var previousOrderLabel: UILabel!
+    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var tableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,27 +52,74 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
     
     //Save users image to Parse. We can potentially send the image to the counter with the order.
     //When do I call this?
-    func imageToParse(file: PFFile) {
-        var image = imageView.image
-        var data:NSData = UIImagePNGRepresentation(image!)!
+    func imageToParse() {
+    
+        let image = imageView.image
+        let imageData = image?.lowestQualityJPEGNSData
+        let imageFile = PFFile(name: "usersImage.PNG", data: imageData!)
         
-        let file = PFFile(name: "UsersImage", data: data)
-        file?.saveInBackgroundWithBlock({ (succeeded, error) -> Void in
-            if succeeded {
-                self.imageToParse(file!)
-            } else if let error = error {
-                print("Error Uploading Users Photo")
-            }
-            },
-            progressBlock: { percent in
-                print("Uploaded: \(percent)%")
-        })
+        let userPhoto = PFObject(className: "UserPhoto")
+        userPhoto["ImageName"] = "\(PFUser.currentUser())"
+        userPhoto["imageFile"] = imageFile
+        userPhoto.saveInBackground()
+
     }
 
-    func preferedOrderSegue() {
-        
+    @IBAction func saveToParseButton(sender: AnyObject) {
+        imageToParse()
     }
 
+
+    //MARK: - TableView DataSource & Delegate
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 3
+    }
+    
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 2
+    }
+
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cellIdentifier = "Cell"
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath)
+        
+        let shortPath = (indexPath.section, indexPath.row)
+        switch shortPath {
+        case(0, 0):
+            cell.textLabel!.text = "Prefered Order"
+        case(0, 1):
+            cell.textLabel!.text = "Previous Order"
+        case(1,1):
+            cell.textLabel!.text = "Payment Preferences"
+        default:
+            cell.textLabel!.text = "😵😵😵😵😵😵"
+        
+        }
+        
+        return cell
+    }
+    
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        if indexPath.row == 0 {
+            let preferredOrderView = self.storyboard?.instantiateViewControllerWithIdentifier("PreferredOrder") as! PreferredOrderTableViewController
+            self.presentViewController(preferredOrderView, animated: true, completion: nil)
+        }
+        if indexPath.row == 1 {
+            let previousOrderView = self.storyboard?.instantiateViewControllerWithIdentifier("PreviousOrder") as! PreviousOrderTableViewController
+            self.presentViewController(previousOrderView, animated: true, completion: nil)
+        }
+        
+        //PaymentOptionsViewController
+    }
     
     
+
+}
+
+extension UIImage {
+    var highestQualityJPEGNSData: NSData { return UIImageJPEGRepresentation(self, 1.0)!  }
+    var highQualityJPEGNSData: NSData    { return UIImageJPEGRepresentation(self, 0.75)! }
+    var mediumQualityJPEGNSData: NSData  { return UIImageJPEGRepresentation(self, 0.5)!  }
+    var lowQualityJPEGNSData: NSData     { return UIImageJPEGRepresentation(self, 0.25)! }
+    var lowestQualityJPEGNSData:NSData   { return UIImageJPEGRepresentation(self, 0.0)!  }
 }

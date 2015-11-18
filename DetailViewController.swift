@@ -9,41 +9,141 @@
 import UIKit
 import MapKit
 
-class DetailViewController: UIViewController, MKMapViewDelegate {
-
+class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, UITableViewDataSource, UITableViewDelegate {
+    
+    //Receiving Data From HomeViewController
+    var merchantId = String()
+    var merchantLocation = PFGeoPoint()
+    
+    
+    var menuList = [String]()
+    var drinkImages = [UIImage]()
+    
+    var merchantObject = [PFObject]()
+    
     var userLocation = UserLocation()
+    var locationManager:CLLocationManager = CLLocationManager()
     
-    
-    @IBOutlet weak var distanceLabel: UILabel!
-    @IBOutlet weak var mapView: MKMapView!
-    @IBOutlet weak var tableView: UITableView!
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        print(merchantId)
+        print(merchantLocation)
+        
+        self.tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        
+        locationManager.delegate = self
+        locationManager.startUpdatingLocation()
+        
+        //Parse
         
         
+        self.tableView.reloadData()
+    
+
+        //Retrieve Merchant & Annotate Map
         
-        self.mapView.delegate = self
+        
+        let aLocation: CLLocationCoordinate2D = merchantLocation.location()
+        let aLocationLongitude = merchantLocation.longitude
+        let aLocationLatitude = merchantLocation.latitude
+        
+        //TODO: Zoom in on pin
+        let latDelta:CLLocationDegrees = 0.1
+        let longDelta:CLLocationDegrees = 0.1
+        let theSpan:MKCoordinateSpan = MKCoordinateSpanMake(latDelta, longDelta)
+        let theRegion:MKCoordinateRegion = MKCoordinateRegionMake(aLocation, theSpan)
+        self.mapView.setRegion(theRegion, animated: true)
+        
         let annotation = MKPointAnnotation()
-        //let coordinate = CLLocationCoordinate2D(latitude: self.merchant.latitude, longitude: self.merchant)
+        let pin = CLLocationCoordinate2DMake(aLocationLatitude, aLocationLongitude)
+        annotation.coordinate = pin
+        
         self.mapView.addAnnotation(annotation)
-        //self.mapView.setRegion(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpanMake(0.01, 0.01)), animated: false)
-        self.mapView.layer.cornerRadius = 9.0
-        self.mapView.layer.masksToBounds = true
+
+    }
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(true)
         
     }
     
+    //MARK: - Parse
+
     
+    //MARK: - MapView
     func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
-        if (annotation is MKPointAnnotation) {
+        if (annotation is MKUserLocation) {
             return nil
         }
         
-        var view = mapView.dequeueReusableAnnotationViewWithIdentifier("pin") as? MKPinAnnotationView
-        if view == nil {
-            view = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "pin")
-            view?.canShowCallout = false
+        let reuseId = "pin"
+    
+        var annotationView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseId) as? MKPinAnnotationView
+        if annotationView == nil {
+            annotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+            annotationView?.canShowCallout = true
+        } else {
+            annotationView?.annotation = annotation
         }
-        return view
+        return annotationView
+    }
+    
+    @IBAction func onCrossHairButton(sender: AnyObject) {
+        let center = self.userLocation.location.coordinate
+        let region = MKCoordinateRegion(center: center, span: self.mapView.region.span)
+        self.mapView.setRegion(region, animated: true)
+    }
+    
+    
+    //MARK: - TableView DataSource & Delegate
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return menuList.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cellIdentifier = "Cell"
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath)
+        
+        let menuObject = merchantObject[indexPath.row] as PFObject
+        
+        cell.textLabel?.text = menuObject.objectForKey("Drinks") as? String
+        
+        
+        return cell
+    }
+    
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {        
+        print("Selected cell # \(indexPath.row)!")
+        
+        
+        
+        
+    }
+    
+
+//    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+//        
+//        if segue.identifier == "SubCatagory" {
+//            if let destination = segue.destinationViewController as? DetailSubCatagoryTableViewController {
+//                if let blogIndex = tableView.indexPathForSelectedRow?.row {
+//                    let menuItem = merchantObject[blogIndex] as PFObject
+//                    
+//                }
+//            }
+//        }
+//    }
+    
+
+    //MARK: - Actions & Outlets
+    @IBOutlet weak var distanceLabel: UILabel!
+    @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var tableView: UITableView!
+}
+
+extension PFGeoPoint {
+    func location() -> CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: self.latitude, longitude: self.longitude)
     }
 }

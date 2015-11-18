@@ -7,15 +7,41 @@
 //
 
 import Foundation
+import Parse
 
 class Merchant {
     
     var dictionary: NSDictionary
+    var allMerchantsArray: NSArray
     
-    init(dictionary: NSDictionary) {
+    init(dictionary: NSDictionary, allMerchantsArray: NSArray) {
         self.dictionary = dictionary
+        self.allMerchantsArray = allMerchantsArray
     }
     
+    class func getMerchants(classNameString: String, objectString: String, var array: [String]) {
+        
+        let query = PFQuery(className: classNameString)
+        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                for object in objects! {
+                    let merchantName = object[objectString] as? String
+                    array.append(merchantName!)
+                    
+                }
+                
+                //self.tableView.reloadData()
+            }
+        }
+        
+    }
+    
+
+    
+
+
+
+
     var name: String {
         get {
             return self.dictionary["name"] as! String
@@ -59,6 +85,8 @@ class Merchant {
             return CLLocation(latitude: self.latitude!, longitude: self.longitude!)
         }
     }
+    
+    
     
 
     
