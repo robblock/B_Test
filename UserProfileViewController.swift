@@ -59,7 +59,7 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
         let imageFile = PFFile(name: "usersImage.PNG", data: imageData!)
         
         let userPhoto = PFObject(className: "UserPhoto")
-        userPhoto["ImageName"] = "\(PFUser.currentUser())"
+        userPhoto["ImageName"] = PFUser.currentUser()
         userPhoto["imageFile"] = imageFile
         userPhoto.saveInBackground()
 

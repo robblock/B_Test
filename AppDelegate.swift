@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import CoreLocation
 import Parse
 import Bolts
 import ParseTwitterUtils
@@ -17,6 +18,8 @@ import ParseFacebookUtilsV4
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var locationManager: CLLocationManager?
+    var lastProximity: CLProximity?
 
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
@@ -30,9 +33,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Track statistics around application opens.
         PFAnalytics.trackAppOpenedWithLaunchOptions(launchOptions)
         
+        //Parse security - every new objet created by the user will only be accesible by the user
+        let acl = PFACL()
+        acl.setPublicReadAccess(true)
+        PFACL.setDefaultACL(acl, withAccessForCurrentUser: true)
+        
         //Login with Twitter/Facebook
 //        PFTwitterUtils.initializeWithConsumerKey(<#T##consumerKey: String##String#>, consumerSecret: <#T##String#>)
 //        PFFacebookUtils.initializeFacebookWithApplicationLaunchOptions(<#T##launchOptions: [NSObject : AnyObject]?##[NSObject : AnyObject]?#>)
+        
+        
+        // check if we have logged in user
+        let user = PFUser.currentUser()
+        
+        let startViewController: UIViewController;
+        
+        if user != nil {
+            // if we have a user, set the HomeViewController to be the initial View Controller
+            
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            startViewController = storyboard.instantiateViewControllerWithIdentifier("Home") 
+        }
+        
+        //MARK: - Config Background Beacon
+        
         
         return true
     }
@@ -136,3 +160,66 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 }
 
+//Recieves beacon data when app is in the background.. Will play sound if beacon is detected and when the user leaves the beacon region
+extension AppDelegate: CLLocationManagerDelegate {
+    func beaconNotificaitonMessage(message: String!, playSound: Bool) {
+        let notification: UILocalNotification = UILocalNotification()
+        notification.alertBody = message
+        
+        if(playSound) {
+            notification.soundName = "Message.caf"
+        }
+        UIApplication.sharedApplication().scheduleLocalNotification(notification)
+    }
+    
+    func locationManager(manager: CLLocationManager, didRangeBeacons beacons: [CLBeacon], inRegion region: CLBeaconRegion) {
+        let viewController:BeaconHomeViewController = window?.rootViewController as! BeaconHomeViewController
+        viewController.beacons = beacons as [CLBeacon]
+        viewController.tableView.reloadData()
+        
+        NSLog("DidRangeBeacons")
+        var message:String = ""
+        var playSound = false
+        
+        if(beacons.count > 0) {
+            let nearestBeacon:CLBeacon = beacons[0] as CLBeacon
+            
+            if(nearestBeacon.proximity == lastProximity || nearestBeacon.proximity == CLProximity.Unknown) {
+                return
+            }
+            lastProximity = nearestBeacon.proximity
+            
+            switch nearestBeacon.proximity {
+            case CLProximity.Far:
+                print("Background Proximity Far")
+                message = "You are far from the beacon"
+                playSound = true
+            case CLProximity.Near:
+                print("Background Proxmity Near")
+            case CLProximity.Immediate:
+                print("Background Proximity Immediate")
+            case CLProximity.Unknown:
+                return
+            }
+            
+        } else {
+            
+            if(lastProximity == CLProximity.Unknown) {
+                return
+            }
+            message = "No beacons are nearby"
+            playSound = true
+            lastProximity = CLProximity.Unknown
+        }
+        NSLog("%@", message)
+        beaconNotificaitonMessage(message, playSound: playSound)
+    }
+    
+    func locationManager(manager: CLLocationManager, didExitRegion region: CLRegion) {
+        manager.stopRangingBeaconsInRegion(region as! CLBeaconRegion)
+        manager.stopUpdatingLocation()
+        
+        NSLog("You exited the region")
+        beaconNotificaitonMessage("You exited the region", playSound: true)
+    }
+}

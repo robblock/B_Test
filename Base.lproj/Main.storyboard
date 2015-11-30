@@ -26,7 +26,38 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="731" y="150"/>
+            <point key="canvasLocation" x="1053" y="150"/>
+        </scene>
+        <!--Beacon Home View Controller-->
+        <scene sceneID="lX3-Ha-e7u">
+            <objects>
+                <viewController id="QhA-RJ-sA8" customClass="BeaconHomeViewController" customModule="beacons_test" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="7bg-vt-vlN"/>
+                        <viewControllerLayoutGuide type="bottom" id="zuC-Z9-th7"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="shO-sx-UuI">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="Tc3-bk-hdn">
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="QhA-RJ-sA8" id="o13-fq-bBl"/>
+                                    <outlet property="delegate" destination="QhA-RJ-sA8" id="4xG-sL-glN"/>
+                                </connections>
+                            </tableView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                    <connections>
+                        <outlet property="tableView" destination="Tc3-bk-hdn" id="fBH-z6-rnJ"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="zSW-vu-4zC" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1053" y="826"/>
         </scene>
         <!--Home-->
         <scene sceneID="F0i-Mk-XOY">
@@ -40,10 +71,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <searchBar contentMode="redraw" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g3c-69-deH">
-                                <rect key="frame" x="0.0" y="64" width="600" height="44"/>
-                                <textInputTraits key="textInputTraits"/>
-                            </searchBar>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="3Vd-Rq-z0m">
                                 <rect key="frame" x="0.0" y="108" width="600" height="443"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -83,6 +110,16 @@
                                     <segue destination="11z-Tt-a3f" kind="show" id="Lvo-aL-YUQ"/>
                                 </connections>
                             </button>
+                            <segmentedControl opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="sdB-Aa-6jg">
+                                <rect key="frame" x="0.0" y="79" width="326" height="29"/>
+                                <segments>
+                                    <segment title="All"/>
+                                    <segment title="Favorites"/>
+                                </segments>
+                                <connections>
+                                    <action selector="segmentControlAction:" destination="fe2-gd-KJ7" eventType="valueChanged" id="0ou-mh-XQJ"/>
+                                </connections>
+                            </segmentedControl>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
@@ -100,6 +137,7 @@
                         </barButtonItem>
                     </navigationItem>
                     <connections>
+                        <outlet property="allFavoritesSegmentedControl" destination="sdB-Aa-6jg" id="o4X-Kw-Gqe"/>
                         <outlet property="merchantMapViewButton" destination="O5R-CB-5CL" id="MhJ-72-nLJ"/>
                         <outlet property="tableView" destination="3Vd-Rq-z0m" id="je6-dp-Rve"/>
                         <segue destination="UJB-Vq-5IK" kind="show" identifier="MerchantDetail" id="L73-Y8-fLn"/>
@@ -247,12 +285,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="xiF-cI-fzf">
-                                <rect key="frame" x="0.0" y="112" width="600" height="194"/>
-                                <connections>
-                                    <outlet property="delegate" destination="UJB-Vq-5IK" id="EkW-Ef-uTl"/>
-                                </connections>
-                            </mapView>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="hQW-o6-nhp">
                                 <rect key="frame" x="0.0" y="305" width="600" height="295"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -271,11 +303,51 @@
                                     <outlet property="delegate" destination="UJB-Vq-5IK" id="xgi-Gm-lRU"/>
                                 </connections>
                             </tableView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Q27-ky-yf8">
+                                <rect key="frame" x="487" y="44" width="51" height="55"/>
+                            </imageView>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="2SD-dt-KAz">
+                                <rect key="frame" x="5" y="46" width="16" height="17"/>
+                                <state key="normal" title="Button" image="heart"/>
+                                <state key="selected" image="heart_selected"/>
+                                <connections>
+                                    <action selector="likeButtonTapped:" destination="UJB-Vq-5IK" eventType="touchUpInside" id="iYL-PL-Jea"/>
+                                </connections>
+                            </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Liked" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gYz-kp-yFQ">
+                                <rect key="frame" x="487" y="15" width="41" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Merchant Name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4Sl-bV-k0l">
+                                <rect key="frame" x="29" y="44" width="169" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Address" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="mIN-pZ-V8F">
+                                <rect key="frame" x="29" y="73" width="169" height="25"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="xiF-cI-fzf">
+                                <rect key="frame" x="0.0" y="103" width="600" height="194"/>
+                                <connections>
+                                    <outlet property="delegate" destination="UJB-Vq-5IK" id="EkW-Ef-uTl"/>
+                                </connections>
+                            </mapView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <connections>
+                        <outlet property="likesButton" destination="2SD-dt-KAz" id="bBJ-c2-Fr3"/>
+                        <outlet property="likesImageView" destination="Q27-ky-yf8" id="9ge-Ix-6mL"/>
+                        <outlet property="likesLabel" destination="gYz-kp-yFQ" id="pu2-MS-fXe"/>
                         <outlet property="mapView" destination="xiF-cI-fzf" id="SVr-oo-NEw"/>
+                        <outlet property="merchantAddressLabel" destination="mIN-pZ-V8F" id="vhf-no-Oy3"/>
+                        <outlet property="merchantNameLabel" destination="4Sl-bV-k0l" id="P77-td-FfT"/>
                         <outlet property="tableView" destination="hQW-o6-nhp" id="UGC-91-4j8"/>
                     </connections>
                 </viewController>
@@ -404,9 +476,13 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="hyb-yF-jzi" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="4032" y="150"/>
+            <point key="canvasLocation" x="4166" y="150"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="heart" width="72" height="68"/>
+        <image name="heart_selected" width="72" height="68"/>
+    </resources>
     <inferredMetricsTieBreakers>
         <segue reference="oSI-DU-eK9"/>
         <segue reference="L73-Y8-fLn"/>

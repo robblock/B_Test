@@ -8,86 +8,84 @@
 
 import Foundation
 import Parse
+import Bond
 
-class Merchant {
+class Merchant: PFObject, PFSubclassing {
     
-    var dictionary: NSDictionary
-    var allMerchantsArray: NSArray
+    @NSManaged var restaurant_id: String?
+    @NSManaged var user: PFUser?
+    @NSManaged var Location: PFGeoPoint?
+    @NSManaged var objectiD: String?
     
-    init(dictionary: NSDictionary, allMerchantsArray: NSArray) {
-        self.dictionary = dictionary
-        self.allMerchantsArray = allMerchantsArray
+     var likes =  Observable<[PFUser]?>(nil)
+    
+    //MARK: PFSubclassing Protocol
+    
+    static func parseClassName() -> String {
+        return "Restaurants_Menus"
     }
     
-    class func getMerchants(classNameString: String, objectString: String, var array: [String]) {
+    override init () {
+        super.init()
+    }
+    
+    override class func initialize() {
+        var onceToken : dispatch_once_t = 0;
+        dispatch_once(&onceToken) {
+            // inform Parse about this subclass
+            self.registerSubclass()
+        }
+    }
+    
+    //Should the like button be red or grey
+    func doesUserLikeMerchant(user: PFUser) -> Bool {
+        if let likes = likes.value {
+            return likes.contains(user)
+        } else {
+            return false
+        }
+    }
+
+    func toggleLikePost(user: PFUser) {
+        if (doesUserLikeMerchant(user)) {
+            // if image is liked, unlike it now
+            // 1
+            likes.value = likes.value?.filter { $0 != user }
+            ParseHelper.unlikePost(user, merchant: self)
+        } else {
+            // if this image is not liked yet, like it now
+            // 2
+            likes.value?.append(user)
+            ParseHelper.likePost(user, merchant: self)
+        }
+    }
+    
+    func fetchLikes() {
+        if (likes.value != nil) {
+            print("NoLikes")
+            return
+        }
         
-        let query = PFQuery(className: classNameString)
-        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
-            if error == nil {
-                for object in objects! {
-                    let merchantName = object[objectString] as? String
-                    array.append(merchantName!)
-                    
-                }
+        ParseHelper.likesForPost(self, completionBlock: { (var likes: [AnyObject]?, error: NSError?) -> Void in
+            if let error = error {
+                ErrorHandling.defaultErrorHandler(error)
+            }
+            // filter likes that are from users that no longer exist
+            likes = likes?.filter { like in like[ParseHelper.parseLikeFromUser] != nil }
+            
+            self.likes.value = likes?.map { like in
+                let like = like as! PFObject
+                let fromUser = like[ParseHelper.parseLikeFromUser] as! PFUser
                 
-                //self.tableView.reloadData()
+                return fromUser
             }
-        }
-        
+        })
     }
     
 
-    
 
 
 
-
-    var name: String {
-        get {
-            return self.dictionary["name"] as! String
-        }
-    }
-    
-
-    var deals: Array<AnyObject>? {
-        get {
-            if let deals = self.dictionary["deals"] as? Array<AnyObject> {
-                return deals
-            }
-            return nil
-        }
-    }
-    
-    var latitude: Double? {
-        get {
-            if let location = self.dictionary["location"] as? NSDictionary {
-                if let coordinate = location["coordinate"] as? NSDictionary {
-                    return (coordinate["latitude"] as! Double)
-                }
-            }
-            return nil
-        }
-    }
-    
-    var longitude: Double? {
-        get {
-            if let location = self.dictionary["location"] as? NSDictionary {
-                if let coordinate = location["coordinate"] as? NSDictionary {
-                    return (coordinate["longitude"] as! Double)
-                }
-            }
-            return nil
-        }
-    }
-    
-    var location: CLLocation {
-        get {
-            return CLLocation(latitude: self.latitude!, longitude: self.longitude!)
-        }
-    }
-    
-    
-    
 
     
 }

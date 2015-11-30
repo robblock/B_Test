@@ -13,11 +13,12 @@ class HomeMapViewController: UIViewController, MKMapViewDelegate, CLLocationMana
     
     let locationManager = CLLocationManager()
     var annotations = [CLLocationCoordinate2D]()
+    var parseHelper = ParseHelper()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let query = PFQuery(className: "Merchants")
+        let query = PFQuery(className: "Restaurants_Menus")
         query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
             if error == nil {
                 for object in objects! {

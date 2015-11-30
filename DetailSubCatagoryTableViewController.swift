@@ -10,10 +10,17 @@ import UIKit
 
 class DetailSubCatagoryTableViewController: UITableViewController {
 
+    var merchantId = String()
+    
+    var merchantObject = [PFObject]()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
         
+        
+        
+        self.tableView.reloadData()
     }
     
     
@@ -34,10 +41,13 @@ class DetailSubCatagoryTableViewController: UITableViewController {
         let cellIdentifier = "Cell"
         let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath)
         
+        
+        
         return cell
     }
 
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        
         
     }
     
