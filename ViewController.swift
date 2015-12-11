@@ -58,6 +58,7 @@ class ViewController: UIViewController, PFLogInViewControllerDelegate, PFSignUpV
     func logInViewController(logInController: PFLogInViewController, didLogInUser user: PFUser) {
         self.dismissViewControllerAnimated(true, completion: nil)
         presentLoggedInAlert()
+        performSegueWithIdentifier("Home", sender: self)
     }
     
     

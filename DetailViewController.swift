@@ -10,7 +10,11 @@ import UIKit
 import MapKit
 import Bond
 
-class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, UITableViewDataSource, UITableViewDelegate {
+let offset_HeaderStop:CGFloat = 40.0 // At this offset the Header stops its transformations
+let distance_W_LabelHeader:CGFloat = 30.0 // The distance between the top of the screen and the top of the White Label
+
+
+class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
     
     //Receiving Data From HomeViewController
     var merchantId = String()
@@ -27,6 +31,8 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
     var userLocation = UserLocation()
     var locationManager:CLLocationManager = CLLocationManager()
     
+    
+    var testMenu = [PFObject]()
 
     //MARK: - Likes
     var likeBond: Observable<[PFUser]?>! = Observable(nil)
@@ -83,17 +89,34 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
         super.viewDidLoad()
         
         self.tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+    
         
-        print(merchantId)
+        let query = PFQuery(className: "Restaurants_Menus_Catagories")
+        query.whereKey("merchant_id", equalTo: merchantId)
+        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                for object in objects! {
+                    if let completeMerchantObject = objects! as? [PFObject] {
+                        self.merchantObject = completeMerchantObject
+                        
+                    }
+                }
+                
+                self.tableView.reloadData()
+            }
+        }
+    
+
+        
 
         
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
         
-        //Parse
         merchant?.fetchLikes()
         merchantNameLabel.text = merchantName
-
+        
+        
         
         //Retrieve Merchant & Annotate Map
         let aLocation: CLLocationCoordinate2D = merchantLocation.location()
@@ -122,13 +145,13 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
             self.merchantAddressLabel.text = self.parseHelper.addressFromPlacemark(placemark!)
         }
         
-        self.tableView.reloadData()
 
     }
     
     
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(true)
+        
         
     }
     
@@ -162,7 +185,7 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
     
     //MARK: - TableView DataSource & Delegate
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return menuList.count
+        return merchantObject.count
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -171,8 +194,7 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
         
         let menuObject = merchantObject[indexPath.row] as PFObject
         
-        cell.textLabel?.text = menuObject.objectForKey("Drinks") as? String
-        
+        cell.textLabel?.text = menuObject.objectForKey("menu_id") as? String
         
         return cell
     }
@@ -182,18 +204,21 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
         
         let index = self.tableView.indexPathForSelectedRow?.row
         
-        performSegueWithIdentifier("MerchantSubCatagory", sender: self)
+        performSegueWithIdentifier("SubCatagory", sender: self)
         
     }
     
 
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if (segue.identifier == "MerchantSubCatagory") {
+        if (segue.identifier == "SubCatagory") {
             if let nvc: DetailSubCatagoryTableViewController = segue.destinationViewController as? DetailSubCatagoryTableViewController {
                 if let blogIndex = tableView.indexPathForSelectedRow?.row {
                     let merchant = merchantObject[blogIndex] as PFObject
                     
-                    nvc.merchantId = merchant.objectId!
+                    nvc.merchantId = merchant.objectForKey("merchant_id") as! String
+                    nvc.menuCatagory = merchant.objectForKey("catagory_id") as! String
+                    
+                    
                     
                 }
             }
@@ -217,6 +242,9 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
     
     @IBOutlet weak var merchantNameLabel: UILabel!
     @IBOutlet weak var merchantAddressLabel: UILabel!
+    
+    @IBOutlet weak var headerView: UIView!
+    @IBOutlet weak var merchantLabelView: UIView!
     
 }
 

@@ -14,12 +14,29 @@ import Bolts
 import ParseTwitterUtils
 import ParseFacebookUtilsV4
 
+enum Notification {
+    enum Catagories: String {
+        case Message
+    }
+    
+    enum Actions: String {
+        case RepeatPurchase
+        case NewPurchase
+    }
+}
+
+
+let ACTION_ONE_IDENTIFIER:String = "ACTION_ONE_IDENTIFIER"
+let ACTION_TWO_IDENTIFIER:String = "ACTION_TWO_IDENTIFIER"
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     var locationManager: CLLocationManager?
     var lastProximity: CLProximity?
+    
+    var localNotificationHelper = LocalNotificationHelper()
 
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
@@ -46,19 +63,91 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // check if we have logged in user
         let user = PFUser.currentUser()
         
-        let startViewController: UIViewController;
+        let startViewController: UIViewController
         
-        if user != nil {
+        if user == nil {
             // if we have a user, set the HomeViewController to be the initial View Controller
             
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
-            startViewController = storyboard.instantiateViewControllerWithIdentifier("Home") 
+            let loginView = storyboard.instantiateViewControllerWithIdentifier("Login") as! ViewController
+            loginView.navigationController?.pushViewController(loginView, animated: true)
         }
         
         //MARK: - Config Background Beacon
         
+        //Notifications
+//        if let notification = launchOptions?[UIApplicationLaunchOptionsLocalNotificationKey] as? UILocalNotification {
+//            
+//        }
+//        
+//        registerForNotifications(application)
+        
+        
+        let actionOne = LocalNotificationHelper.sharedInstance().createUserNotificationActionButton(identifier: ACTION_ONE_IDENTIFIER, title: "Repeat Order")
+        let actionTwo = LocalNotificationHelper.sharedInstance().createUserNotificationActionButton(identifier: ACTION_TWO_IDENTIFIER, title: "This time I'd like..")
+        
+        let actions = [actionOne, actionTwo]
+        
+        LocalNotificationHelper.sharedInstance().registerUserNotificationWithActionButtons(actions: actions)
         
         return true
+    }
+    
+    func registerForNotifications(application: UIApplication) {
+        let newPurchaseAction = UIMutableUserNotificationAction()
+        newPurchaseAction.identifier = Notification.Actions.NewPurchase.rawValue
+        newPurchaseAction.title = "New Purchase"
+        newPurchaseAction.activationMode = .Foreground
+        
+        let repeatPurchaseAction = UIMutableUserNotificationAction()
+        repeatPurchaseAction.identifier = Notification.Actions.RepeatPurchase.rawValue
+        repeatPurchaseAction.title = "Repeat Previous Purchase"
+        repeatPurchaseAction.activationMode = .Foreground
+        
+        let category = UIMutableUserNotificationCategory()
+        category.identifier = Notification.Catagories.Message.rawValue
+        category.setActions([newPurchaseAction, repeatPurchaseAction], forContext: .Default)
+        category.setActions([newPurchaseAction, repeatPurchaseAction], forContext: .Minimal)
+        
+        let settings = UIUserNotificationSettings(forTypes: [.Alert, .Badge, .Sound], categories: [category])
+        application.registerUserNotificationSettings(settings)
+    }
+    
+    func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forLocalNotification notification: UILocalNotification, withResponseInfo responseInfo: [NSObject : AnyObject], completionHandler: () -> Void) {
+        defer { completionHandler() }
+        guard let identifier = identifier, let action = Notification.Actions(rawValue: identifier) else { return }
+        
+        switch action {
+        case .NewPurchase:
+            print("Handle NewPurchase Case")
+        case .RepeatPurchase:
+            print("repeatPurchase")
+        }
+        
+    }
+    
+    func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forLocalNotification notification: UILocalNotification, completionHandler: () -> Void) {
+        if identifier == ACTION_ONE_IDENTIFIER {
+            print("Action one - tapped")
+            NSNotificationCenter.defaultCenter().postNotificationName(ACTION_ONE_IDENTIFIER, object: nil)
+            
+        } else if identifier == ACTION_TWO_IDENTIFIER {
+            print("Action two - tapped")
+            NSNotificationCenter.defaultCenter().postNotificationName(ACTION_TWO_IDENTIFIER, object: nil)
+        }
+        
+        completionHandler()
+    }
+    
+    func repeatOrderTapped(notifciation: NSNotification) {
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let homeView = storyboard.instantiateViewControllerWithIdentifier("Login") as! HomeViewController
+        homeView.navigationController?.pushViewController(homeView, animated: true)
+    }
+    
+    func newOrderTapped(notification: NSNotification) {
+        
+        
     }
     
     //This function is called when we jump out to the facebook app/website to login the user and then re-enter the app
@@ -123,7 +212,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             dict[NSLocalizedDescriptionKey] = "Failed to initialize the application's saved data"
             dict[NSLocalizedFailureReasonErrorKey] = failureReason
 
-            dict[NSUnderlyingErrorKey] = error as NSError
+            dict[NSUnderlyingErrorKey] = error as! NSError
             let wrappedError = NSError(domain: "YOUR_ERROR_DOMAIN", code: 9999, userInfo: dict)
             // Replace this with code to handle the error appropriately.
             // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.

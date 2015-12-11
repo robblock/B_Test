@@ -61,7 +61,6 @@ class ParseHelper: NSObject {
     }
     
     
-    
     /**
      Saves object to a specific class on Parse server
      */
@@ -171,6 +170,23 @@ class ParseHelper: NSObject {
         }
         return imageFile
     }
+    
+    func getUsersProfilePicture(completion: (UIImage, NSError)) -> UIImage {
+        let usersImage = PFUser.currentUser()?.objectForKey("userImage") as! PFFile
+        var image: UIImage!
+        usersImage.getDataInBackgroundWithBlock({ (imageData: NSData?, error: NSError?) -> Void in
+            if error == nil {
+                if let imageData = imageData {
+                    image = UIImage(data: imageData)!
+                }
+            }
+            
+        })
+        
+        return image
+    }
+    
+    
 
     func reverseGeocodeLocation(location:CLLocation,completion:(placemark:CLPlacemark?, error:NSError?)->Void){
         let geoCoder = CLGeocoder()
@@ -226,7 +242,7 @@ class ParseHelper: NSObject {
 
 
 
-public func getErrorMessage(error:NSError?) -> String {
+ func getErrorMessage(error:NSError?) -> String {
     var errorMessage = ""
     if error != nil {
         errorMessage = error!.localizedDescription
@@ -236,6 +252,7 @@ public func getErrorMessage(error:NSError?) -> String {
     }
     return errorMessage
 }
+
 
     
 

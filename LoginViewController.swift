@@ -32,7 +32,7 @@ class LoginViewController : PFLogInViewController {
         //Remove the Parse Logo
         let logo = UILabel()
         logo.text = "ORDR"
-        logo.textColor = UIColor.whiteColor()
+        logo.textColor = UIColor.redColor()
         logo.font = UIFont(name: "Pacifico.ttf", size: 70)
         logo.shadowColor = UIColor.lightGrayColor()
         logo.shadowOffset = CGSizeMake(2, 2)

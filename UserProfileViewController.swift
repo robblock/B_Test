@@ -9,67 +9,282 @@
 import UIKit
 import Parse
 
+struct Data {
+    var FirstName:String!
+    var LastName:String!
+    var Gender:String!
+    var Age:String!
+    var Image:UIImage!
+}
 
-class UserProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDelegate, UITableViewDataSource {
+struct DataArray {
+    var array = [Data]()
+}
+
+class UserProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
-    let imagePicker = UIImagePickerController()
     
     var preferedDrink = [String]()
     var previousDrink = [String]()
     
+    let parseHelper = ParseHelper()
+    var usersData = [Data]()
+    
+    @IBOutlet var UsersInfoTextFields: [UITextField]!
+    
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var saveToParseButton: UIButton!
+    @IBOutlet weak var imagePickerButton: UIButton!
+
+    
+    @IBOutlet weak var usersFirstNameField: UITextField!
+    @IBOutlet weak var usersLastNameField: UITextField!
+    @IBOutlet weak var usersAgeField: UITextField!
+    @IBOutlet weak var usersGenderField: UITextField!
+    @IBOutlet weak var userNameLabel: UILabel!
+    
+    @IBOutlet weak var submitUserInfoButton: UIButton!
+    
+    @IBOutlet weak var editViewButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        imagePicker.delegate = self
+        if imageView.image == nil {
+            let usersImage = PFUser.currentUser()?.objectForKey("userImage") as! PFFile
+            usersImage.getDataInBackgroundWithBlock({ (imageData: NSData?, error: NSError?) -> Void in
+                if error == nil {
+                    if let imageData = imageData {
+                        self.imageView.image = UIImage(data: imageData)
+                    }
+                }
+            })
+        }
         
+        parseUsersData { (usersDataArray) -> Void in
+            self.usersData.appendContentsOf(usersDataArray)
+        }
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "likeActionButtonTapped:", name: ACTION_ONE_IDENTIFIER, object: nil)
+        
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "dislikeActionButtonTapped:", name: ACTION_TWO_IDENTIFIER, object: nil)
+        
+        var userData:Data!
+        
+        
+        
+        
+        
+        usersFirstNameField.delegate = self
+        usersLastNameField.delegate = self
+        usersAgeField.delegate = self
+        usersGenderField.delegate = self
+        
+        applyPlaceholderStyle(usersFirstNameField, placeholderText: "First Name")
+        applyPlaceholderStyle(usersLastNameField, placeholderText: "Last Name")
+        applyPlaceholderStyle(usersAgeField, placeholderText: "Age")
+        applyPlaceholderStyle(usersGenderField, placeholderText: "Gender")
+        
+        usersFirstNameField.borderStyle = UITextBorderStyle.None
+        usersLastNameField.borderStyle = UITextBorderStyle.None
+        usersAgeField.borderStyle = UITextBorderStyle.None
+        usersGenderField.borderStyle = UITextBorderStyle.None
         
     }
     
+    
+    func parseUsersData(completionHandler: [Data] -> Void) {
+        var usersDataArray = [Data]()
+        let query = PFQuery(className: "_User")
+        query.fromLocalDatastore()
+        query.findObjectsInBackgroundWithBlock { (objects, error) -> Void in
+            if error == nil {
+                if let user = objects as? [PFObject]! {
+                    for object in user! {
+                        var singleData = Data()
+                        singleData.FirstName = object["firstName"] as! String
+                        singleData.LastName = object["lastName"] as! String
+                        singleData.Gender = object["gender"] as! String
+                        singleData.Age = object["age"] as! String
+                        var image = object["userImage"] as! PFFile
+                        image.getDataInBackgroundWithBlock({ (imageData: NSData?, error: NSError?) -> Void in
+                            if error == nil {
+                                if let imageData = imageData {
+                                    singleData.Image = UIImage(data: imageData)
+                                    usersDataArray.append(singleData)
+                                    
+                                }
+                            }
+                        })
+                        
+                        usersDataArray.append(singleData)
+                    }
+                }
+                completionHandler(usersDataArray)
+            }
+            
+        }
+    }
+    
+    
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(false)
+        
+        //Style View
+        let nav = self.navigationController?.navigationBar
+        nav?.barStyle = UIBarStyle.Black
+        nav?.tintColor = UIColor.whiteColor()
+        
+        let tab = UITabBar.appearance()
+        tab.barStyle = UIBarStyle.Black
+    }
+
+                    
+    //MARK: - Profile Image
+    //We can potentially send the image to the counter with the order so they know who the order is for.
     func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
         
-        imageView.image = info[UIImagePickerControllerOriginalImage] as? UIImage
-        imageView.contentMode = UIViewContentMode.ScaleAspectFill
-        imageView.clipsToBounds = true
+        let pickedImage:UIImage = info[UIImagePickerControllerOriginalImage] as! UIImage
+        
+        imageView.image = pickedImage
+        
+        
+        let scaledImage = self.scaleImageWith(pickedImage, and: CGSizeMake(300, 200))
+        let imageData = scaledImage.lowestQualityJPEGNSData
+        let imageFile:PFFile = PFFile(data: imageData)!
+        
+        
+        PFUser.currentUser()!.setObject(imageFile, forKey: "userImage")
+        PFUser.currentUser()?.saveInBackground()
+
+        
+        
+        imagePickerButton.hidden = true
         
         dismissViewControllerAnimated(true, completion: nil)
     }
+    
     
     func imagePickerControllerDidCancel(picker: UIImagePickerController) {
         dismissViewControllerAnimated(true, completion: nil)
     }
     
     @IBAction func imagePickerButton(sender: AnyObject) {
-        
-        imagePicker.allowsEditing = false
+        let imagePicker = UIImagePickerController()
         imagePicker.sourceType = .PhotoLibrary
+        imagePicker.delegate = self
         
         presentViewController(imagePicker, animated: true, completion: nil)
         
     }
     
-    //Save users image to Parse. We can potentially send the image to the counter with the order.
-    //When do I call this?
-    func imageToParse() {
-    
-        let image = imageView.image
-        let imageData = image?.lowestQualityJPEGNSData
-        let imageFile = PFFile(name: "usersImage.PNG", data: imageData!)
+    func scaleImageWith(newImage:UIImage, and newSize:CGSize)->UIImage{
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 0.0)
+        newImage.drawInRect(CGRectMake(0, 0, newSize.width, newSize.height))
+        UIGraphicsEndImageContext()
         
-        let userPhoto = PFObject(className: "UserPhoto")
-        userPhoto["ImageName"] = PFUser.currentUser()
-        userPhoto["imageFile"] = imageFile
-        userPhoto.saveInBackground()
+        return newImage
+    }
+    
+    //MARK: - Users Information
+    func setUserInfo() {
+        PFUser.currentUser()?.setObject(usersFirstNameField.text!, forKey: "firstName")
+        PFUser.currentUser()?.setObject(usersLastNameField.text!, forKey: "lastName")
+        PFUser.currentUser()?.setObject(usersAgeField.text!, forKey: "age")
+        PFUser.currentUser()?.setObject(usersGenderField.text!, forKey: "gender")
+        
+        PFUser.currentUser()?.pinInBackground()
+        PFUser.currentUser()?.saveInBackground()
+        
+    }
+    
+    @IBAction func saveUsersInfo(sender: AnyObject) {
+        setUserInfo()
+        
+    }
+    
+    //MARK: - TextField Delegate
+    func textFieldShouldBeginEditing(textField: UITextField) -> Bool {
+        if textField.text == nil {
+            textField.textColor = UIColor.blackColor()
+        }
+        
+        return true
+    }
+    
+    func textFieldDidBeginEditing(textField: UITextField) {
+        if textField.text == UIColor.lightGrayColor() {
+            textField.textColor = UIColor.blackColor()
+            textField.text?.uppercaseString
+        }
+    }
+    
+    func textFieldDidEndEditing(textField: UITextField) {
+        if textField.text == nil {
+            textField.textColor = UIColor.lightGrayColor()
+        } else {
+            textField.textColor = UIColor.blackColor()
+        }
+    }
+    
+    func textFieldShouldClear(textField: UITextField) -> Bool {
+        if textField.text == UIColor.lightGrayColor() {
+            
+        }
+        return true
+    }
+    
+    func textField(textField: UITextField, shouldChangeCharactersInRange range: NSRange, replacementString string: String) -> Bool {
+        
+        let newLength = (textField.text?.utf16.count)! - range.length
+        if newLength > 0 {
+            
+        }
+        
+        return true
+    }
+    
+    
+    func textFieldShouldEndEditing(textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        
+        return true
+    }
+    
+    func textFieldShouldReturn(textField: UITextField) -> Bool {
+
+        textField.resignFirstResponder()
+        
+        return true
+    }
+    
+    //Tap outside textField to dismiss keyboard
+    @IBAction func userTappedBackground(sender: AnyObject) {
+        view.endEditing(true)
+    }
+    
+    func saveTextFieldsToParse() -> UITextField? {
+        for field in UsersInfoTextFields {
+            if field.textColor == UIColor.blackColor() {
+                return field
+            }
+        }
+        return nil
+    }
+    
+    func applyPlaceholderStyle(aTextview: UITextField, placeholderText: String) {
+        aTextview.textColor = UIColor.lightGrayColor()
+        aTextview.text = placeholderText
 
     }
-
-    @IBAction func saveToParseButton(sender: AnyObject) {
-        imageToParse()
+    
+    func applyNonPlaceHolderStyle(aTextView: UITextField) {
+        aTextView.textColor = UIColor.blackColor()
+        aTextView.alpha = 1.0
     }
-
-
+    
     //MARK: - TableView DataSource & Delegate
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return 3
@@ -109,10 +324,19 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
             self.presentViewController(previousOrderView, animated: true, completion: nil)
         }
         
-        //PaymentOptionsViewController
+//        if indexPath.row == 2 {
+//            let paymentOrderView = self.storyboard?.instantiateViewControllerWithIdentifier("Payment") as PaymentChoiceViewController
+//            self.presentViewController(paymentOrderView, animated: true, completion: nil)
+//        }
+        
     }
     
     
+    //MARK: - Edit View
+    
+    @IBAction func editViewButton(sender: AnyObject) {
+        
+    }
 
 }
 

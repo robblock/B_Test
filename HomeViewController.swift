@@ -21,8 +21,11 @@ enum ListType {
 class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
     var merchantObject = [PFObject]()
+
     
     var segmentedControl = UISegmentedControl()
+    
+    
     var listType: ListType = .All
 
     
@@ -31,6 +34,12 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         self.tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: "Cell")
 
+        print(PFUser.currentUser())
+        
+        if PFUser.currentUser() == nil {
+            performSegueWithIdentifier("Login", sender: self)
+        }
+        
         //Parse
         let query = PFQuery(className: "Restaurants_Menus")
         query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
@@ -38,14 +47,12 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
                 for object in objects! {
                     if let completeMerchantObject = objects! as? [PFObject] {
                     self.merchantObject = completeMerchantObject
-                    //print(self.merchantObject)
                     }
                 }
                 
                 self.tableView.reloadData()
             }
         }
-        
 
         
         //SegmentController
@@ -54,14 +61,26 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         //DMZEmptyTableView
         self.tableView.emptyDataSetDelegate = self
         self.tableView.emptyDataSetSource = self
+    }
+    
+    //Navigation Bar
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(true)
         
+        var nav = self.navigationController?.navigationBar
+        nav?.barStyle = UIBarStyle.Black
+        nav?.tintColor = UIColor.whiteColor()
     }
 
+    func customizeButton(button: UIButton) {
+        button.setBackgroundImage(nil, forState: .Normal)
+        button.backgroundColor = UIColor.clearColor()
+        button.layer.cornerRadius = 5
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.whiteColor().CGColor
+    }
     
     //MARK: - TableView DataSource & Delegate
-    
-
-    
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch listType {
             
@@ -69,7 +88,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             return merchantObject.count
         
         case .Favorite:
-            return merchantObject.count
+            return 0
         }
     }
     
@@ -79,12 +98,14 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath)
         
         switch listType {
+            
         case .All:
         let merchant = merchantObject[indexPath.row] as PFObject
-        cell.textLabel?.text = merchant.objectForKey("restaurant_id") as? String
+        cell.textLabel?.text = merchant.objectForKey("restaurant_name") as? String
         //Sublabel should display distance from merchant
+            
         case .Favorite:
-        cell.textLabel!.text = "hello"
+            return cell
         }
         
         
@@ -94,11 +115,18 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         print("Selected cell # \(indexPath.row)!")
         
+        switch listType {
+            
+        case .All:
         let index = self.tableView.indexPathForSelectedRow?.row
         let merchant = merchantObject[index!] as PFObject
         
         
         performSegueWithIdentifier("MerchantDetail", sender: self)
+            
+        case .Favorite: break
+            
+        }
     }
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
@@ -108,19 +136,39 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
                     
                     let merchant = merchantObject[blogIndex] as PFObject
                     
-                    nvc.merchantId = merchant.objectId!
+                    nvc.merchantId = merchant.objectForKey("restaurant_id") as! String
                     nvc.merchantLocation = merchant.objectForKey("Location") as! PFGeoPoint
-                    nvc.merchantName = merchant.objectForKey("restaurant_id") as! String
+                    nvc.merchantName = merchant.objectForKey("restaurant_name") as! String
+                    
+                    
+                    //let relation = merchant.relationForKey("restaurants_menus")
+                    //nvc.testMenu = relation.valueForKey(merchant.objectId!) as! [PFObject]
 
                 }
             }
         }
+        
+        if (segue.identifier == "All") {
+            if let nvc: HomeMapViewController = segue.destinationViewController as? HomeMapViewController {
+                if let blogindex = tableView.indexPathForSelectedRow?.row {
+                    let merchant = merchantObject[blogindex] as PFObject
+                    
+                    nvc.allMerchants = merchant.objectForKey("Location") as! [PFGeoPoint]
+                }
+            }
+        }
+        
+        if (segue.identifier == "Favorite") {
+            if let nvc: HomeMapViewController = segue.destinationViewController as? HomeMapViewController {
+               
+                    
+                
+            }
+        }
+
     }
 
-    //TODO: Add a liked/favorite merchant bar button (Example: All Merchants | Favorite) which will display only merchants the user has liked https://www.makeschool.com/tutorials/build-a-photo-sharing-app-part-1/organize-parse-query
-    
     //MARK: - Segmented Controller
-    
     @IBAction func segmentControlAction(sender: UISegmentedControl) {
         
         if sender.selectedSegmentIndex == 0 {
@@ -133,24 +181,76 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         
     }
 
-
     
-    //MARK: - Actions & Outlets
+    //MARK: - Outlets & Actions
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var userProfileButton: UIButton!
     @IBOutlet weak var merchantMapViewButton: UIButton!
  
     @IBOutlet weak var allFavoritesSegmentedControl: UISegmentedControl!
 
+    @IBAction func merchantMapViewButton(sender: AnyObject) {
+        if (allFavoritesSegmentedControl.selectedSegmentIndex == 1) {
+            performSegueWithIdentifier("Favorite", sender: self)
+        } else {
+            performSegueWithIdentifier("All", sender: self)
+        }
+    }
+    
+    
     
 }
 
+//MARK: - DZNEMPTYTableView
 extension HomeViewController: DZNEmptyDataSetSource, DZNEmptyDataSetDelegate {
+
+        
     func titleForEmptyDataSet(scrollView: UIScrollView!) -> NSAttributedString! {
-        return NSAttributedString(string: "Got Nothin")
+        
+        let text = "Got Nothin"
+        
+        var para = NSMutableParagraphStyle()
+        para.lineBreakMode = NSLineBreakMode.ByWordWrapping
+        para.alignment = NSTextAlignment.Center
+        
+        let attribs = [
+            NSFontAttributeName: UIFont.systemFontOfSize(26),
+            NSForegroundColorAttributeName: UIColor.lightGrayColor(),
+            NSParagraphStyleAttributeName: para
+        ]
+        
+        return NSAttributedString(string: text, attributes: attribs)
     }
     
     func descriptionForEmptyDataSet(scrollView: UIScrollView!) -> NSAttributedString! {
-        return NSAttributedString(string: "Sorry about this, I'm Just all out of data")
+        let text = "Start drinkin more coffee bro"
+        
+        var para = NSMutableParagraphStyle()
+        para.lineBreakMode = NSLineBreakMode.ByWordWrapping
+        para.alignment = NSTextAlignment.Center
+        
+        let attribs = [
+            NSFontAttributeName: UIFont.systemFontOfSize(20),
+            NSForegroundColorAttributeName: UIColor.lightGrayColor(),
+            NSParagraphStyleAttributeName: para
+        ]
+        
+        
+        return NSAttributedString(string: text, attributes: attribs)
+    }
+    
+    func buttonTitleForEmptyDataSet(scrollView: UIScrollView!, forState state: UIControlState) -> NSAttributedString! {
+        let str = "I'm ready to get caffinated"
+        let attrs = [NSFontAttributeName: UIFont.preferredFontForTextStyle("Pacifico"),
+            NSForegroundColorAttributeName: UIColor.lightGrayColor()
+            
+        ]
+        
+        return NSAttributedString(string: str, attributes: attrs)
+    }
+    
+    func emptyDataSetDidTapButton(scrollView: UIScrollView!) {
+        print("button tapped")
+        allFavoritesSegmentedControl.selectedSegmentIndex == 0
     }
 }

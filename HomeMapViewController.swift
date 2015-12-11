@@ -9,11 +9,16 @@
 import UIKit
 import MapKit
 
+
+
 class HomeMapViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate {
     
     let locationManager = CLLocationManager()
     var annotations = [CLLocationCoordinate2D]()
     var parseHelper = ParseHelper()
+    
+    var allMerchants = [PFGeoPoint]()
+    var favoriteMerchants = [PFGeoPoint]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
