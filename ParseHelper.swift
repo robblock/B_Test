@@ -31,9 +31,32 @@ class ParseHelper: NSObject {
     static func likePost(user: PFUser, merchant: Merchant) {
         let likedObject = PFObject(className: ParseLikeClass)
         likedObject[parseLikeFromUser] = user
-        likedObject[ParseLikeToPost] = merchant
+        //likedObject[ParseLikeToPost] = merchant
+        likedObject["ParseLikeToPost"] = PFObject(withoutDataWithClassName: "Restaurants_Menus", objectId: "yfEUVsa61X")
         
         likedObject.saveInBackgroundWithBlock(nil)
+    }
+    
+    func saveLike(user: PFUser, objectID: String) {
+        let likedObject = PFObject(className: "Like")
+        likedObject["fromUser"] = PFUser.currentUser()
+        likedObject["toPost"] = PFObject(withoutDataWithClassName: "Restaurants_Menus", objectId: objectID)
+        
+        likedObject.saveInBackground()
+    }
+    
+    func unlike(user: PFUser, objectID: String ) {
+        let query = PFQuery(className: "Like")
+        query.whereKey("fromUser", equalTo: user)
+        query.whereKey("toPost", equalTo: PFObject(withoutDataWithClassName: "Restaurants_Menus", objectId: objectID))
+        
+        query.findObjectsInBackgroundWithBlock { (results: [PFObject]?, error: NSError?) -> Void in
+            if let results = results {
+                for likes in results {
+                    likes.deleteInBackground()
+                }
+            }
+        }
     }
     
     static func unlikePost(user: PFUser, merchant: Merchant) {
@@ -46,7 +69,7 @@ class ParseHelper: NSObject {
             // 2
             if let results = results {
                 for likes in results {
-                    likes.deleteInBackgroundWithBlock(nil)
+                    likes.deleteInBackground()
                 }
             }
         }
@@ -59,6 +82,7 @@ class ParseHelper: NSObject {
         
         query.findObjectsInBackground()
     }
+    
     
     
     /**
@@ -256,4 +280,23 @@ class ParseHelper: NSObject {
 
     
 
-
+class ExtendedNavBarView: UIView {
+    
+    //| ----------------------------------------------------------------------------
+    //  Called when the view is about to be displayed.  May be called more than
+    //  once.
+    //
+    override func willMoveToWindow(newWindow: UIWindow?) {
+        // Use the layer shadow to draw a one pixel hairline under this view.
+        self.layer.shadowOffset = CGSizeMake(0, 1.0/UIScreen.mainScreen().scale)
+        self.layer.shadowRadius = 0
+        
+        // UINavigationBar's hairline is adaptive, its properties change with
+        // the contents it overlies.  You may need to experiment with these
+        // values to best match your content.
+        self.layer.shadowColor = UIColor.blackColor().CGColor
+        self.layer.shadowOpacity = 0.25
+        
+    }
+    
+}

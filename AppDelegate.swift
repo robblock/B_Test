@@ -13,6 +13,7 @@ import Parse
 import Bolts
 import ParseTwitterUtils
 import ParseFacebookUtilsV4
+import MMDrawerController
 
 enum Notification {
     enum Catagories: String {
@@ -26,17 +27,17 @@ enum Notification {
 }
 
 
-let ACTION_ONE_IDENTIFIER:String = "ACTION_ONE_IDENTIFIER"
-let ACTION_TWO_IDENTIFIER:String = "ACTION_TWO_IDENTIFIER"
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    var window: UIWindow?
     var locationManager: CLLocationManager?
     var lastProximity: CLProximity?
     
     var localNotificationHelper = LocalNotificationHelper()
+    
+    var window:UIWindow?
+    var centerContainer: MMDrawerController?
 
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
@@ -82,13 +83,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //        
 //        registerForNotifications(application)
         
+        //MARK: - MMDrawerController
+        var rootViewController = self.window?.rootViewController
+        let mainStoryBoard:UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+        var centerVC = mainStoryBoard.instantiateViewControllerWithIdentifier("Home") as! HomeViewController
+        var leftVC = mainStoryBoard.instantiateViewControllerWithIdentifier("LeftSideTableViewController") as! LeftSideTableViewController
         
-        let actionOne = LocalNotificationHelper.sharedInstance().createUserNotificationActionButton(identifier: ACTION_ONE_IDENTIFIER, title: "Repeat Order")
-        let actionTwo = LocalNotificationHelper.sharedInstance().createUserNotificationActionButton(identifier: ACTION_TWO_IDENTIFIER, title: "This time I'd like..")
+        var leftSideNav = UINavigationController(rootViewController: leftVC)
+        var centerNav = UINavigationController(rootViewController: centerVC)
         
-        let actions = [actionOne, actionTwo]
+        centerContainer = MMDrawerController(centerViewController: centerNav, leftDrawerViewController: leftSideNav)
+        centerContainer!.openDrawerGestureModeMask = MMOpenDrawerGestureMode.PanningCenterView
+        centerContainer!.closeDrawerGestureModeMask = MMCloseDrawerGestureMode.PanningCenterView
         
-        LocalNotificationHelper.sharedInstance().registerUserNotificationWithActionButtons(actions: actions)
+        
+        
+        window?.rootViewController = centerContainer
+        window?.makeKeyAndVisible()
         
         return true
     }
@@ -123,30 +134,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         case .RepeatPurchase:
             print("repeatPurchase")
         }
-        
-    }
-    
-    func application(application: UIApplication, handleActionWithIdentifier identifier: String?, forLocalNotification notification: UILocalNotification, completionHandler: () -> Void) {
-        if identifier == ACTION_ONE_IDENTIFIER {
-            print("Action one - tapped")
-            NSNotificationCenter.defaultCenter().postNotificationName(ACTION_ONE_IDENTIFIER, object: nil)
-            
-        } else if identifier == ACTION_TWO_IDENTIFIER {
-            print("Action two - tapped")
-            NSNotificationCenter.defaultCenter().postNotificationName(ACTION_TWO_IDENTIFIER, object: nil)
-        }
-        
-        completionHandler()
-    }
-    
-    func repeatOrderTapped(notifciation: NSNotification) {
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let homeView = storyboard.instantiateViewControllerWithIdentifier("Login") as! HomeViewController
-        homeView.navigationController?.pushViewController(homeView, animated: true)
-    }
-    
-    func newOrderTapped(notification: NSNotification) {
-        
         
     }
     

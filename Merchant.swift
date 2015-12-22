@@ -82,10 +82,5 @@ class Merchant: PFObject, PFSubclassing {
         })
     }
     
-
-
-
-
-
     
 }

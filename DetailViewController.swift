@@ -21,6 +21,8 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
     var merchantLocation = PFGeoPoint()
     var merchantName = String()
     
+    var merchantObjId = String()
+    
     var menuCatagory = String()
     
     var menuList = [String]()
@@ -39,52 +41,8 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
     var parseHelper = ParseHelper()
     
     var likeDisposable: DisposableType?
-    
-    var merchant: Merchant? {
-        didSet {
-            
-            likeDisposable!.dispose()
-            
-            
-            if let merchant = merchant {
-                likeDisposable = merchant.likes.observe { (value: [PFUser]?) -> () in
-                    if let value = value {
-                        self.likesButton.selected = value.contains(PFUser.currentUser()!)
-                        self.likesImageView.hidden = (value.count == 0)
-                    } else {
-                        self.likesLabel.text = ""
-                        self.likesButton.selected = false
-                        self.likesImageView.hidden = true
-                    }
-                    
-                }
-            }
-        }
-    }
+    var merchant = Merchant()
 
-    
-    //MARK: Initialization
-    
-//    required init?(coder aDecoder: NSCoder) {
-//        super.init(coder: aDecoder)
-//        
-//        
-//        let likeBonds = likeBond.observe() { [unowned self] likeList in
-//            if let likeList = likeList {
-//                    self.likesButton.selected = likeList.contains(PFUser.currentUser()!)
-//                    self.likesImageView.hidden = (likeList.count == 0)
-//            } else {
-//                    // if there is no list of users that like this post, reset everything
-////                    
-////                    self.likesButton.selected = false
-////                    self.likesImageView.hidden = true
-//                
-//                }
-//            }
-//        }
-    
-
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -107,13 +65,10 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
         }
     
 
-        
-
-        
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
         
-        merchant?.fetchLikes()
+        merchant.fetchLikes()
         merchantNameLabel.text = merchantName
         
         
@@ -127,8 +82,8 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
         
         
         //TODO: Zoom in on pin
-        let latDelta:CLLocationDegrees = 0.05
-        let longDelta:CLLocationDegrees = 0.05
+        let latDelta:CLLocationDegrees = 0.0005
+        let longDelta:CLLocationDegrees = 0.0005
         let theSpan:MKCoordinateSpan = MKCoordinateSpanMake(latDelta, longDelta)
         let theRegion:MKCoordinateRegion = MKCoordinateRegionMake(aLocation, theSpan)
         self.mapView.setRegion(theRegion, animated: true)
@@ -143,6 +98,7 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
         //ReverseGeocode merchantLocation to display to user
         parseHelper.reverseGeocodeLocation(clLocation) { (placemark, error) -> Void in
             self.merchantAddressLabel.text = self.parseHelper.addressFromPlacemark(placemark!)
+            
         }
         
 
@@ -217,17 +173,21 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
                     
                     nvc.merchantId = merchant.objectForKey("merchant_id") as! String
                     nvc.menuCatagory = merchant.objectForKey("catagory_id") as! String
-                    
-                    
-                    
                 }
             }
         }
     }
     
     @IBAction func likeButtonTapped(sender: AnyObject) {
-        merchant!.toggleLikePost(PFUser.currentUser()!)
-        print("User Liked \(merchantId)")
+            
+        self.likesButton.setImage(UIImage(named: "heart_selected"), forState: UIControlState.Selected)
+        
+        self.parseHelper.saveLike(PFUser.currentUser()!, objectID: self.merchantObjId)
+        
+        //            self.likesButton.setImage(UIImage(named: "heart_selected"), forState: UIControlState.Selected)
+        //
+        //            self.parseHelper.unlike(PFUser.currentUser()!, objectID: self.merchantObjId)
+
     }
     
     //MARK: - Actions & Outlets

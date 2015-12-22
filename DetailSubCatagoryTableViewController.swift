@@ -12,7 +12,9 @@ class DetailSubCatagoryTableViewController: UITableViewController, UIPopoverPres
 
     var merchantId = String()
     var menuCatagory = String()
+    var merchantObjectId = String()
     var merchantObject = [PFObject]()
+    var merchant = [PFObject]()
     
     
     override func viewDidLoad() {
@@ -21,18 +23,24 @@ class DetailSubCatagoryTableViewController: UITableViewController, UIPopoverPres
         let query = PFQuery(className: "Restaurants_Menus_Catagories_Items")
         query.whereKey("restaurant_id", equalTo: merchantId)
         query.whereKey("catagory_id", equalTo: menuCatagory)
+        query.includeKey("restaurant_name")
         query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
             if error == nil {
                 for object in objects! {
                     if let completeMerchantObject = objects! as? [PFObject] {
                         self.merchantObject = completeMerchantObject
                     }
+                    if let merchant:PFObject = object["restaurant_name"] as? PFObject {
+                        let name = merchant["restaurant_name"] as! String
+                        let id = merchant.objectId! as String
+                        self.merchantObjectId = id
+                    }
+
                 }
                 
                 self.tableView.reloadData()
             }
         }
-
         
     }
     
@@ -64,7 +72,15 @@ class DetailSubCatagoryTableViewController: UITableViewController, UIPopoverPres
             
             var popover = UIStoryboard(name: "Main", bundle: nil).instantiateViewControllerWithIdentifier("idPopover") as! PopoverViewController
             
-            
+            if let blogIndex = tableView.indexPathForSelectedRow?.row {
+                let merchant = merchantObject[blogIndex] as PFObject
+                popover.itemName = merchant.objectForKey("name") as! String
+                
+            }
+            popover.merchantId = merchantId
+            popover.menuCatagory = menuCatagory
+            popover.merchantObjectId = merchantObjectId
+
             popover.modalPresentationStyle = UIModalPresentationStyle.Popover
             popover.popoverPresentationController?.delegate = self
             popover.popoverPresentationController?.sourceView = selectedCellSourceView
@@ -76,18 +92,6 @@ class DetailSubCatagoryTableViewController: UITableViewController, UIPopoverPres
         
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if (segue.identifier == "popover") {
-            if let nvc: PopoverViewController = segue.destinationViewController as? PopoverViewController {
-                if let blogIndex = tableView.indexPathForSelectedRow?.row {
-                    let merchant = merchantObject[blogIndex] as PFObject
-                    
-                    nvc.merchantId = merchantId
-                    nvc.menuCatagory = menuCatagory
-                }
-            }
-        }
-    }
     
     @IBAction func prepareForUnwind(segue: UIStoryboardSegue) {
         

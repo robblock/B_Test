@@ -8,6 +8,7 @@
 
 import Foundation
 import ParseUI
+import ParseTwitterUtils
 
 class LoginViewController : PFLogInViewController {
     
@@ -46,8 +47,8 @@ class LoginViewController : PFLogInViewController {
         logInView?.logInButton?.backgroundColor = UIColor(red: 52/255, green: 191/255, blue: 73/255, alpha: 1)
         
         //Make the buttons classier
-        customizeButton(logInView!.facebookButton!)
-        customizeButton(logInView!.twitterButton!)
+        facebookButton(logInView!.facebookButton!)
+        twitterButton(logInView!.twitterButton!)
         customizeButton(logInView!.signUpButton!)
         
         self.signUpController = SignUpViewController()
@@ -71,6 +72,28 @@ class LoginViewController : PFLogInViewController {
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.whiteColor().CGColor
     }
+
+    
+    //Border Facebook blue
+    func facebookButton(button: UIButton) {
+        button.setBackgroundImage(nil, forState: .Normal)
+        button.backgroundColor = UIColor.clearColor()
+        button.layer.cornerRadius = 5
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.whiteColor().CGColor
+        
+    }
+    
+    //Border twitter blue
+    func twitterButton(button: UIButton) {
+        button.setBackgroundImage(nil, forState: .Normal)
+        button.backgroundColor = UIColor.clearColor()
+        button.layer.cornerRadius = 5
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.whiteColor().CGColor
+        
+    }
+
     
     
 }

@@ -9,8 +9,8 @@
 import Foundation
 import UIKit
 import Parse
-import ParseUI
-import MapKit
+import CoreLocation
+import MMDrawerController
 
 
 enum ListType {
@@ -18,16 +18,39 @@ enum ListType {
     case Favorite
 }
 
-class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+/*
+Todo: 
+    1. When the user likes a merchant, set a bool pointer in the Restaurant_Menus class, if the pointer is true, set likeIcon to selected.
+    2. Signup Screen: http://cdn.pttrns.com/127/5432_f.jpg
+    3. HomeScreen: Caviar
+        Merchant Name
+        Address
+        Perfered Order 
+        Photo of merchant
+    4. Shopping Cart: http://cdn.pttrns.com/275/5165_f.jpg
+    5. LefsideTableView: http://cdn.pttrns.com/366/5514_f.jpg
+
+
+
+
+
+*/
+
+class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, CLLocationManagerDelegate {
 
     var merchantObject = [PFObject]()
 
+    var optionsItemName = String()
+    var optionsItemArray = [String]()
     
     var segmentedControl = UISegmentedControl()
     
     
     var listType: ListType = .All
 
+    let locationManager = CLLocationManager()
+    
+    var usersLocationGeoPoint = PFGeoPoint()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,18 +65,39 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         //Parse
         let query = PFQuery(className: "Restaurants_Menus")
+        query.includeKey("order_options")
         query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
             if error == nil {
                 for object in objects! {
                     if let completeMerchantObject = objects! as? [PFObject] {
-                    self.merchantObject = completeMerchantObject
+                        self.merchantObject = completeMerchantObject
+                    }
+                    if let options:PFObject = object["order_options"] as? PFObject {
+                        let id = options.objectId! as String
+                        let itemName = options["item_name"] as!  String
+                        let optionsArray = options["options_array"] as! [String]
+                        
+                        self.optionsItemName = itemName
+                        self.optionsItemArray = optionsArray
                     }
                 }
-                
                 self.tableView.reloadData()
             }
+            
         }
+        
 
+        //LocationManager
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
+        
+        PFGeoPoint.geoPointForCurrentLocationInBackground { (geoPoint: PFGeoPoint?, error: NSError?) -> Void in
+            if error == nil {
+                self.usersLocationGeoPoint = geoPoint!
+            }
+        }
         
         //SegmentController
         segmentedControl.selectedSegmentIndex = 0
@@ -61,8 +105,14 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         //DMZEmptyTableView
         self.tableView.emptyDataSetDelegate = self
         self.tableView.emptyDataSetSource = self
+        
+        var nib = UINib(nibName: "HomeTableViewCell", bundle: nil)
+        tableView.registerNib(nib, forCellReuseIdentifier: "Cell")
     }
     
+
+    
+
     //Navigation Bar
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(true)
@@ -78,6 +128,8 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         button.layer.cornerRadius = 5
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.whiteColor().CGColor
+        
+        
     }
     
     //MARK: - TableView DataSource & Delegate
@@ -92,17 +144,23 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
     
-
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cellIdentifier = "Cell"
-        let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath)
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath) as! HomeTableViewCell
         
         switch listType {
             
         case .All:
         let merchant = merchantObject[indexPath.row] as PFObject
-        cell.textLabel?.text = merchant.objectForKey("restaurant_name") as? String
-        //Sublabel should display distance from merchant
+        let distanceToMerchantLocation = merchant.objectForKey("Location") as! PFGeoPoint
+        
+        cell.merchantNameLabel.text = merchant.objectForKey("restaurant_name") as? String
+        cell.preferedOrderLabel.text = optionsItemName
+        
+
+        cell.distanceToMerchantLabel.text = ("\(distanceToMerchantLocation.distanceInMilesTo(usersLocationGeoPoint))")
+        
+        cell.distanceImageView.image = UIImage(named: "point")
             
         case .Favorite:
             return cell
@@ -112,6 +170,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         return cell
     }
     
+
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         print("Selected cell # \(indexPath.row)!")
         
@@ -139,11 +198,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
                     nvc.merchantId = merchant.objectForKey("restaurant_id") as! String
                     nvc.merchantLocation = merchant.objectForKey("Location") as! PFGeoPoint
                     nvc.merchantName = merchant.objectForKey("restaurant_name") as! String
-                    
-                    
-                    //let relation = merchant.relationForKey("restaurants_menus")
-                    //nvc.testMenu = relation.valueForKey(merchant.objectId!) as! [PFObject]
-
+                    nvc.merchantObjId = merchant.objectId! as String
                 }
             }
         }
@@ -161,12 +216,17 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         if (segue.identifier == "Favorite") {
             if let nvc: HomeMapViewController = segue.destinationViewController as? HomeMapViewController {
                
-                    
-                
             }
         }
 
     }
+    
+    //MARK: - LocationManager
+    func locationManager(manager: CLLocationManager, didFailWithError error: NSError) {
+        print("Error = \(error)")
+    }
+    
+    
 
     //MARK: - Segmented Controller
     @IBAction func segmentControlAction(sender: UISegmentedControl) {
@@ -181,7 +241,13 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         
     }
 
-    
+    //MARK: - MMDrawerController
+    @IBAction func leftSideDrawerButton(sender: AnyObject) {
+        var appDelegate:AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        appDelegate.centerContainer?.toggleDrawerSide(.Left, animated: true, completion: nil)
+        
+        print("DrawerButton Tapped")
+    }
     //MARK: - Outlets & Actions
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var userProfileButton: UIButton!
@@ -254,3 +320,4 @@ extension HomeViewController: DZNEmptyDataSetSource, DZNEmptyDataSetDelegate {
         allFavoritesSegmentedControl.selectedSegmentIndex == 0
     }
 }
+

@@ -17,9 +17,6 @@ struct Data {
     var Image:UIImage!
 }
 
-struct DataArray {
-    var array = [Data]()
-}
 
 class UserProfileViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
@@ -29,6 +26,7 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
     
     let parseHelper = ParseHelper()
     var usersData = [Data]()
+    
     
     @IBOutlet var UsersInfoTextFields: [UITextField]!
     
@@ -62,26 +60,19 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
             })
         }
         
-        parseUsersData { (usersDataArray) -> Void in
-            self.usersData.appendContentsOf(usersDataArray)
-        }
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "likeActionButtonTapped:", name: ACTION_ONE_IDENTIFIER, object: nil)
-        
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "dislikeActionButtonTapped:", name: ACTION_TWO_IDENTIFIER, object: nil)
-        
-        var userData:Data!
-        
-        
-        
-        
-        
+//        var userData:Data!
+//        
+//        parseUsersData { (usersDataArray) -> Void in
+//            self.usersData = usersDataArray
+//        }
+
+                
         usersFirstNameField.delegate = self
         usersLastNameField.delegate = self
         usersAgeField.delegate = self
         usersGenderField.delegate = self
         
-        applyPlaceholderStyle(usersFirstNameField, placeholderText: "First Name")
+        //applyPlaceholderStyle(usersFirstNameField, placeholderText: "First Name")
         applyPlaceholderStyle(usersLastNameField, placeholderText: "Last Name")
         applyPlaceholderStyle(usersAgeField, placeholderText: "Age")
         applyPlaceholderStyle(usersGenderField, placeholderText: "Gender")
@@ -120,7 +111,9 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
                         
                         usersDataArray.append(singleData)
                     }
+                    self.tableView.reloadData()
                 }
+                
                 completionHandler(usersDataArray)
             }
             
@@ -128,6 +121,31 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
     }
     
     
+    func performQuery() {
+        let query = PFQuery(className: "_User")
+        query.whereKey("User", equalTo: PFUser.currentUser()!)
+        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                // The find succeeded.
+                print("Successfully retrieved \(objects!.count) lighthouses.")
+                // Do something with the found objects
+                if let light = objects as? [PFObject]? {
+                    for object in light! {
+                        _ = Data()
+                        let firstName = object["firstName"] as! String
+                        let lastName = object["lastName"] as! String
+                        let gender = object["gender"] as! String
+                        let age = object["age"] as! String
+                        
+                    }
+                    self.tableView.reloadData()
+                }
+            } else {
+                // Log details of the failure
+                print("Error: \(error!) \(error!.userInfo)")
+            }
+        }
+    }
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(false)
@@ -159,7 +177,7 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
         PFUser.currentUser()!.setObject(imageFile, forKey: "userImage")
         PFUser.currentUser()?.saveInBackground()
 
-        
+        PFUser.currentUser()?.pinInBackgroundWithName("userImage")
         
         imagePickerButton.hidden = true
         
@@ -306,8 +324,11 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
             cell.textLabel!.text = "Previous Order"
         case(1,1):
             cell.textLabel!.text = "Payment Preferences"
+            
+        case(1,2):
+            cell.textLabel!.text = "Suport"
         default:
-            cell.textLabel!.text = "😵😵😵😵😵😵"
+            cell.textLabel!.text = ""
         
         }
         
@@ -315,15 +336,21 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
     }
     
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.row == 0 {
-            let preferredOrderView = self.storyboard?.instantiateViewControllerWithIdentifier("PreferredOrder") as! PreferredOrderTableViewController
-            self.presentViewController(preferredOrderView, animated: true, completion: nil)
-        }
-        if indexPath.row == 1 {
-            let previousOrderView = self.storyboard?.instantiateViewControllerWithIdentifier("PreviousOrder") as! PreviousOrderTableViewController
-            self.presentViewController(previousOrderView, animated: true, completion: nil)
-        }
         
+        let shortPath = (indexPath.section, indexPath.row)
+        switch shortPath {
+        case(0, 0):
+            performSegueWithIdentifier("preferred", sender: self)
+        case(0, 1):
+            performSegueWithIdentifier("previous", sender: self)
+        case(1,1):
+            performSegueWithIdentifier("payment", sender: self)
+           
+        default:
+           print("test")
+            
+        }
+
 //        if indexPath.row == 2 {
 //            let paymentOrderView = self.storyboard?.instantiateViewControllerWithIdentifier("Payment") as PaymentChoiceViewController
 //            self.presentViewController(paymentOrderView, animated: true, completion: nil)
@@ -338,6 +365,11 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
         
     }
 
+    @IBAction func leftSideDrawerButton(sender: AnyObject) {
+        var appDelegate:AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        appDelegate.centerContainer?.toggleDrawerSide(.Left, animated: true, completion: nil)
+        print("DrawerButton Tapped")
+    }
 }
 
 extension UIImage {
