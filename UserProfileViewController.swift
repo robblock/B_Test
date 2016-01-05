@@ -58,6 +58,8 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
                     }
                 }
             })
+        } else {
+            imageView.image = nil
         }
         
 //        var userData:Data!
@@ -120,32 +122,6 @@ class UserProfileViewController: UIViewController, UIImagePickerControllerDelega
         }
     }
     
-    
-    func performQuery() {
-        let query = PFQuery(className: "_User")
-        query.whereKey("User", equalTo: PFUser.currentUser()!)
-        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
-            if error == nil {
-                // The find succeeded.
-                print("Successfully retrieved \(objects!.count) lighthouses.")
-                // Do something with the found objects
-                if let light = objects as? [PFObject]? {
-                    for object in light! {
-                        _ = Data()
-                        let firstName = object["firstName"] as! String
-                        let lastName = object["lastName"] as! String
-                        let gender = object["gender"] as! String
-                        let age = object["age"] as! String
-                        
-                    }
-                    self.tableView.reloadData()
-                }
-            } else {
-                // Log details of the failure
-                print("Error: \(error!) \(error!.userInfo)")
-            }
-        }
-    }
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(false)

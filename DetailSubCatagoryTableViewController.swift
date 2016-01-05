@@ -75,17 +75,18 @@ class DetailSubCatagoryTableViewController: UITableViewController, UIPopoverPres
             if let blogIndex = tableView.indexPathForSelectedRow?.row {
                 let merchant = merchantObject[blogIndex] as PFObject
                 popover.itemName = merchant.objectForKey("name") as! String
-                
+                popover.price = merchant.objectForKey("price") as! Double
             }
             popover.merchantId = merchantId
             popover.menuCatagory = menuCatagory
             popover.merchantObjectId = merchantObjectId
-
+            
+                
             popover.modalPresentationStyle = UIModalPresentationStyle.Popover
             popover.popoverPresentationController?.delegate = self
             popover.popoverPresentationController?.sourceView = selectedCellSourceView
             popover.popoverPresentationController?.permittedArrowDirections = .Up
-            popover.preferredContentSize = CGSizeMake(self.view.frame.width, 300)
+            popover.preferredContentSize = CGSizeMake(self.view.frame.width, 600)
             self.presentViewController(popover, animated: true, completion: nil)
             
         }

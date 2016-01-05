@@ -30,6 +30,10 @@ Todo:
     4. Shopping Cart: http://cdn.pttrns.com/275/5165_f.jpg
     5. LefsideTableView: http://cdn.pttrns.com/366/5514_f.jpg
 
+    rating system for wait time 
+        https://github.com/glenyi/FloatRatingView
+    menu button
+        https://github.com/robb/hamburger-button
 
 
 
@@ -39,6 +43,7 @@ Todo:
 class HomeViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, CLLocationManagerDelegate {
 
     var merchantObject = [PFObject]()
+    var likesObject = [PFObject]()
 
     var optionsItemName = String()
     var optionsItemArray = [String]()
@@ -51,6 +56,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     let locationManager = CLLocationManager()
     
     var usersLocationGeoPoint = PFGeoPoint()
+    let parseHelper = ParseHelper()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -77,14 +83,30 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
                         let itemName = options["item_name"] as!  String
                         let optionsArray = options["options_array"] as! [String]
                         
+                        
                         self.optionsItemName = itemName
                         self.optionsItemArray = optionsArray
+                        
                     }
                 }
                 self.tableView.reloadData()
             }
-            
         }
+        
+        
+        let query2 = PFQuery(className: "Like")
+        query2.fromLocalDatastore()
+        query2.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+            if error == nil {
+                for object in objects! {
+                    if let completeMerchantObject2 = objects! as? [PFObject] {
+                       self.likesObject = completeMerchantObject2
+                    }
+                }
+                self.tableView.reloadData()
+            }
+        }
+        
         
 
         //LocationManager
@@ -106,8 +128,11 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         self.tableView.emptyDataSetDelegate = self
         self.tableView.emptyDataSetSource = self
         
-        var nib = UINib(nibName: "HomeTableViewCell", bundle: nil)
+        let nib = UINib(nibName: "HomeTableViewCell", bundle: nil)
         tableView.registerNib(nib, forCellReuseIdentifier: "Cell")
+        
+        let favNib = UINib(nibName: "HomeFavoritesTableViewCell", bundle: nil)
+        tableView.registerNib(favNib, forCellReuseIdentifier: "Favorite")
     }
     
 
@@ -117,7 +142,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(true)
         
-        var nav = self.navigationController?.navigationBar
+        let nav = self.navigationController?.navigationBar
         nav?.barStyle = UIBarStyle.Black
         nav?.tintColor = UIColor.whiteColor()
     }
@@ -140,34 +165,61 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             return merchantObject.count
         
         case .Favorite:
-            return 0
+            return likesObject.count
         }
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cellIdentifier = "Cell"
-        let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath) as! HomeTableViewCell
+        
+        var cell:UITableViewCell!
         
         switch listType {
             
         case .All:
-        let merchant = merchantObject[indexPath.row] as PFObject
-        let distanceToMerchantLocation = merchant.objectForKey("Location") as! PFGeoPoint
-        
-        cell.merchantNameLabel.text = merchant.objectForKey("restaurant_name") as? String
-        cell.preferedOrderLabel.text = optionsItemName
-        
-
-        cell.distanceToMerchantLabel.text = ("\(distanceToMerchantLocation.distanceInMilesTo(usersLocationGeoPoint))")
-        
-        cell.distanceImageView.image = UIImage(named: "point")
+            let cellIdentifier = "Cell"
+            let allCell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath) as! HomeTableViewCell
+            let merchant = merchantObject[indexPath.row] as PFObject
+            let distanceToMerchantLocation = merchant.objectForKey("Location") as! PFGeoPoint
+            
+            allCell.merchantNameLabel.text = merchant.objectForKey("restaurant_name") as? String
+            allCell.preferedOrderLabel.text = optionsItemName
+            allCell.preferedOptionsLabel.text = optionsItemArray.joinWithSeparator(" , ")
+            
+            allCell.distanceToMerchantLabel.text = ("\(distanceToMerchantLocation.distanceInMilesTo(usersLocationGeoPoint))")
+            
+            allCell.distanceImageView.image = UIImage(named: "point")
+            
+            return allCell
             
         case .Favorite:
+            let cellIdentifier = "Favorite"
+            let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath) as! HomeFavoritesTableViewCell
+            
+            let likes:PFObject = self.likesObject[indexPath.row] as PFObject
+            
+            if let name = likes["toPost"] as? PFObject {
+                if let restaurantName = name["restaurant_name"] as? String {
+                    cell.merchantNameLabel.text = restaurantName
+                }
+            }
+            
+            if let location = likes["toPost"] as? PFObject {
+                if let merchantLocation = location["Location"] as? PFGeoPoint {
+                    
+                    let aLongitutde = merchantLocation.longitude
+                    let aLatitude = merchantLocation.latitude
+                    let cllocation:CLLocation = CLLocation(latitude: aLatitude, longitude: aLongitutde)
+                    
+                    parseHelper.reverseGeocodeLocation(cllocation, completion: { (placemark, error) -> Void in
+                        cell.merchantLocationLabel.text = self.parseHelper.addressFromPlacemark(placemark!)
+                    })
+                }
+            }
+
             return cell
         }
         
         
-        return cell
     }
     
 
@@ -183,8 +235,11 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         performSegueWithIdentifier("MerchantDetail", sender: self)
             
-        case .Favorite: break
+        case .Favorite:
+            let index = self.tableView.indexPathForSelectedRow?.row
+            let merchant = likesObject[index!] as PFObject
             
+            performSegueWithIdentifier("FavoriteDetail", sender: self)
         }
     }
     
@@ -203,18 +258,56 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             }
         }
         
+        if (segue.identifier == "FavoriteDetail") {
+            if let nvc: DetailViewController = segue.destinationViewController as? DetailViewController {
+                if let blogIndex = tableView.indexPathForSelectedRow?.row {
+                    
+                    let likes = likesObject[blogIndex] as PFObject
+                    
+                    if let location = likes["toPost"] as? PFObject {
+                        if let restaurantName = location["restaurant_name"] as? String {
+                            nvc.merchantName = restaurantName
+                        }
+                    }
+                    if let location = likes["toPost"] as? PFObject {
+                        if let restaurantName = location["restaurant_id"] as? String {
+                            nvc.merchantId = restaurantName
+                        }
+                    }
+                    if let location = likes["toPost"] as? PFObject {
+                        nvc.merchantObjId = location.objectId! as String
+                    }
+                    if let location = likes["toPost"] as? PFObject {
+                        if let restaurantName = location["Location"] as? PFGeoPoint {
+                            nvc.merchantLocation = restaurantName
+                        }
+                    }
+                }
+            }
+        }
+        
         if (segue.identifier == "All") {
             if let nvc: HomeMapViewController = segue.destinationViewController as? HomeMapViewController {
                 if let blogindex = tableView.indexPathForSelectedRow?.row {
                     let merchant = merchantObject[blogindex] as PFObject
                     
-                    nvc.allMerchants = merchant.objectForKey("Location") as! [PFGeoPoint]
+                    nvc.favoriteMerchants = merchant.objectForKey("Location") as! PFGeoPoint
                 }
             }
         }
         
         if (segue.identifier == "Favorite") {
             if let nvc: HomeMapViewController = segue.destinationViewController as? HomeMapViewController {
+                if let blogIndex = tableView.indexPathForSelectedRow?.row {
+                    let likes = likesObject[blogIndex]
+                    
+                    if let location = likes["toPost"] as? PFObject {
+                        if let merchantLocation = location["Location"] as? PFGeoPoint {
+                            nvc.favoriteMerchants = merchantLocation 
+                        }
+                    }
+                    
+                }
                
             }
         }
@@ -227,27 +320,6 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     
-
-    //MARK: - Segmented Controller
-    @IBAction func segmentControlAction(sender: UISegmentedControl) {
-        
-        if sender.selectedSegmentIndex == 0 {
-            listType = .All
-        } else {
-            listType = .Favorite
-        }
-        
-        tableView.reloadData()
-        
-    }
-
-    //MARK: - MMDrawerController
-    @IBAction func leftSideDrawerButton(sender: AnyObject) {
-        var appDelegate:AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
-        appDelegate.centerContainer?.toggleDrawerSide(.Left, animated: true, completion: nil)
-        
-        print("DrawerButton Tapped")
-    }
     //MARK: - Outlets & Actions
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var userProfileButton: UIButton!
@@ -258,12 +330,29 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBAction func merchantMapViewButton(sender: AnyObject) {
         if (allFavoritesSegmentedControl.selectedSegmentIndex == 1) {
             performSegueWithIdentifier("Favorite", sender: self)
+            
         } else {
             performSegueWithIdentifier("All", sender: self)
+            
         }
     }
     
+        @IBAction func segmentControlAction(sender: UISegmentedControl) {
+        
+        if sender.selectedSegmentIndex == 0 {
+            listType = .All
+        } else {
+            listType = .Favorite
+        }
+        
+        tableView.reloadData()
+        
+    }
     
+        @IBAction func leftSideDrawerButton(sender: AnyObject) {
+        var appDelegate:AppDelegate = UIApplication.sharedApplication().delegate as! AppDelegate
+        appDelegate.centerContainer?.toggleDrawerSide(.Left, animated: true, completion: nil)
+    }
     
 }
 

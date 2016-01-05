@@ -25,6 +25,8 @@ class LeftSideTableViewController: UITableViewController, MFMailComposeViewContr
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.tableFooterView = UIView()
+        tableView.separatorColor = UIColor.clearColor()
+        tableView.scrollEnabled = false
         navImageView = UIImageView(frame: CGRectMake(0, 0, 100, 100))
         
         let query = PFQuery(className: "_User")
@@ -66,14 +68,17 @@ class LeftSideTableViewController: UITableViewController, MFMailComposeViewContr
     }
     
 
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(true)
+        
+        setupNavbar()
+    }
     
-    override func viewDidAppear(animated: Bool) {
+    func setupNavbar() {
         
         var nav = self.navigationController?.navigationBar
         nav?.barStyle = UIBarStyle.Black
-        
-        //applyImageBackgroundToTheNavigationBar()
-        
+    
         var leftBarImageView:UIBarButtonItem = UIBarButtonItem(customView: navImageView)
         
         navImageView.contentMode = .ScaleAspectFill
@@ -87,8 +92,9 @@ class LeftSideTableViewController: UITableViewController, MFMailComposeViewContr
         
         navigationItem.title = firstName + lastName
         navigationItem.prompt = "tests"
-
     }
+    
+    
     // MARK: - TableView DataSource
     
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -105,16 +111,18 @@ class LeftSideTableViewController: UITableViewController, MFMailComposeViewContr
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cellIdentifier = "Cell"
         let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath)
+
         
         let shortPath = (indexPath.section, indexPath.row)
         switch shortPath {
-        case(0,2):
-            cell.textLabel?.text = "Give Us Feedback"
+        case(0,1):
+            cell.textLabel!.text = "User Profile"
         case(0,3):
-            cell.textLabel!.text = "User Options"
-        case(0,5):
+
+            cell.textLabel!.text = "Give Us Feedback"
+        case(0,4):
             cell.textLabel!.text = "Share"
-        case(1,1):
+        case(1,2):
             cell.textLabel!.text = "Logout"
             
         default:
@@ -124,21 +132,28 @@ class LeftSideTableViewController: UITableViewController, MFMailComposeViewContr
         return cell
     }
     
-
+    
     
     //MARK: - UITableViewDelegate
     
-        override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        
+        var selectedCell:UITableViewCell = tableView.cellForRowAtIndexPath(indexPath)!
+        let bgColorView = UIView()
+        bgColorView.backgroundColor = UIColor.whiteColor()
+        
+        selectedCell.selectedBackgroundView = bgColorView
+        
         let shortPath = (indexPath.section, indexPath.row)
         switch shortPath {
-        case(0,2):
-            emailFeedback()
-            print("Feedback")
-        case(0,3):
+        case(0,1):
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             let vc = storyboard.instantiateViewControllerWithIdentifier("Profile") as! UserProfileViewController
             self.presentViewController(vc, animated: true, completion: nil)
-        case(0,5):
+        case(0,3):
+            emailFeedback()
+            print("Feedback")
+        case(0,4):
             social()
             print("Share")
         case(1,1):

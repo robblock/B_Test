@@ -18,40 +18,60 @@ class HomeMapViewController: UIViewController, MKMapViewDelegate, CLLocationMana
     var parseHelper = ParseHelper()
     
     var allMerchants = [PFGeoPoint]()
-    var favoriteMerchants = [PFGeoPoint]()
+    var favoriteMerchants = PFGeoPoint()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print(self.allMerchants)
+//        let query = PFQuery(className: "Restaurants_Menus")
+//        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
+//            if error == nil {
+//                for object in objects! {
+//                    let geoPoint = object["Location"] as? PFGeoPoint
+//                    
+//                    let aLocation: CLLocationCoordinate2D = geoPoint!.location()
+//                    self.annotations.append(aLocation)
+//                    print(self.annotations)
+//                    let aLocationLongitude = geoPoint!.longitude
+//                    let aLocationLatitude = geoPoint!.latitude
+//                    
+//                    //TODO: Zoom in on pin
+//                    let latDelta:CLLocationDegrees = 0.1
+//                    let longDelta:CLLocationDegrees = 0.1
+//                    let theSpan:MKCoordinateSpan = MKCoordinateSpanMake(latDelta, longDelta)
+//                    let theRegion:MKCoordinateRegion = MKCoordinateRegionMake(aLocation, theSpan)
+//                    self.mapView.setRegion(theRegion, animated: true)
+//                    
+//                    let annotation = MKPointAnnotation()
+//                    let pin = CLLocationCoordinate2DMake(aLocationLatitude, aLocationLongitude)
+//                    annotation.coordinate = pin
+//                    
+//                    self.mapView.addAnnotation(annotation)
+//                }
+//                
+//                self.mapView.reloadInputViews()
+//            }
+//        }
         
-        let query = PFQuery(className: "Restaurants_Menus")
-        query.findObjectsInBackgroundWithBlock { (objects: [PFObject]?, error: NSError?) -> Void in
-            if error == nil {
-                for object in objects! {
-                    let geoPoint = object["Location"] as? PFGeoPoint
-                    
-                    let aLocation: CLLocationCoordinate2D = geoPoint!.location()
-                    self.annotations.append(aLocation)
-                    print(self.annotations)
-                    let aLocationLongitude = geoPoint!.longitude
-                    let aLocationLatitude = geoPoint!.latitude
-                    
-                    //TODO: Zoom in on pin
-                    let latDelta:CLLocationDegrees = 0.1
-                    let longDelta:CLLocationDegrees = 0.1
-                    let theSpan:MKCoordinateSpan = MKCoordinateSpanMake(latDelta, longDelta)
-                    let theRegion:MKCoordinateRegion = MKCoordinateRegionMake(aLocation, theSpan)
-                    self.mapView.setRegion(theRegion, animated: true)
-                    
-                    let annotation = MKPointAnnotation()
-                    let pin = CLLocationCoordinate2DMake(aLocationLatitude, aLocationLongitude)
-                    annotation.coordinate = pin
-                    
-                    self.mapView.addAnnotation(annotation)
-                }
-                
-                self.mapView.reloadInputViews()
-            }
-        }
+        let aLocation: CLLocationCoordinate2D = favoriteMerchants.location()
+        self.annotations.append(aLocation)
+        print(self.annotations)
+        let aLocationLongitude = favoriteMerchants.longitude
+        let aLocationLatitude = favoriteMerchants.latitude
+        
+        //TODO: Zoom in on pin
+        let latDelta:CLLocationDegrees = 0.0005
+        let longDelta:CLLocationDegrees = 0.0005
+        let theSpan:MKCoordinateSpan = MKCoordinateSpanMake(latDelta, longDelta)
+        let theRegion:MKCoordinateRegion = MKCoordinateRegionMake(aLocation, theSpan)
+        self.mapView.setRegion(theRegion, animated: true)
+        
+        let annotation = MKPointAnnotation()
+        let pin = CLLocationCoordinate2DMake(aLocationLatitude, aLocationLongitude)
+        annotation.coordinate = pin
+        
+        self.mapView.addAnnotation(annotation)
+        
         
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest

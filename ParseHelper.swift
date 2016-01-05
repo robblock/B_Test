@@ -42,6 +42,7 @@ class ParseHelper: NSObject {
         likedObject["fromUser"] = PFUser.currentUser()
         likedObject["toPost"] = PFObject(withoutDataWithClassName: "Restaurants_Menus", objectId: objectID)
         
+        likedObject.pinInBackgroundWithName("likes")
         likedObject.saveInBackground()
     }
     
@@ -53,7 +54,9 @@ class ParseHelper: NSObject {
         query.findObjectsInBackgroundWithBlock { (results: [PFObject]?, error: NSError?) -> Void in
             if let results = results {
                 for likes in results {
+                    
                     likes.deleteInBackground()
+                    likes.unpinInBackgroundWithName("likes")
                 }
             }
         }
@@ -278,7 +281,9 @@ class ParseHelper: NSObject {
 }
 
 
+
     
+
 
 class ExtendedNavBarView: UIView {
     

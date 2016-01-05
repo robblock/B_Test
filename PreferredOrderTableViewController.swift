@@ -92,11 +92,11 @@ class PreferredOrderTableViewController: UITableViewController {
         let cell = tableView.dequeueReusableCellWithIdentifier(cellIdentifier, forIndexPath: indexPath) as! PreferedTableViewCell
         
         let merchant = merchantObject[indexPath.row] as PFObject
-        let options = optionsArray[indexPath.row] as String
+        //let options = optionsArray[indexPath.row] as String
         
         
         cell.item_nameLabel.text = merchant.objectForKey("item_name") as? String
-        cell.item_OptionsLabel.text = options
+//        cell.item_OptionsLabel.text = options
         cell.merchantNameLabel.text = merchantName
 
         return cell

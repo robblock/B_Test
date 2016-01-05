@@ -6,9 +6,14 @@
 //  Copyright © 2015 robblock. All rights reserved.
 //
 
+import Bond
 
 class Tag {
-    
-    var name: String?
+    var name = ""
+    var selected = false
+}
+
+class SelectedTag {
+    var name = ""
     var selected = false
 }

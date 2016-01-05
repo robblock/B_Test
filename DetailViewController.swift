@@ -37,10 +37,8 @@ class DetailViewController: UIViewController, MKMapViewDelegate, CLLocationManag
     var testMenu = [PFObject]()
 
     //MARK: - Likes
-    var likeBond: Observable<[PFUser]?>! = Observable(nil)
     var parseHelper = ParseHelper()
-    
-    var likeDisposable: DisposableType?
+
     var merchant = Merchant()
 
     override func viewDidLoad() {
